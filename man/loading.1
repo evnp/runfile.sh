@@ -1,0 +1,110 @@
+.TH "LOADING" "1" "August 2024"
+.SH "NAME"
+\fBrun.sh – “tmux-execute” – a lightweight tmux command & layout composer\fR
+.SH DESCRIPTION
+.br
+Basic usage:
+.P
+🚧 Under construction 🚧
+.SH Install
+.P
+Homebrew:
+.RS 2
+.nf
+brew tap evnp/run\.sh && brew install run\.sh
+.fi
+.RE
+.P
+NPM:
+.RS 2
+.nf
+npm install \-g run\.sh
+.fi
+.RE
+.P
+curl:
+.RS 2
+.nf
+read \-rp $'\\n'"Current \\$PATH:"$'\\n'"${PATH//:/ : }"$'\\n\\n'"Enter a directory from the list above: " \\
+  && curl \-L \-o "${REPLY/\\~/$HOME}/run\.sh" https://github\.com/evnp/run\.sh/raw/main/run\.sh \\
+  && chmod +x "${REPLY/\\~/$HOME}/run\.sh"
+.fi
+.RE
+.P
+run\.sh has no external dependencies, but it's good practice to audit code before downrun\.sh onto your system to ensure it contains nothing unexpected\. Please view the full source code for run\.sh here: https://github.com/evnp/run.sh/blob/master/run.sh
+.P
+If you also want to install run\.sh's man page:
+.RS 2
+.nf
+read \-rp $'\\n'"Current \\$MANPATH:"$'\\n'"${MANPATH//:/ : }"$'\\n\\n'"Enter a directory from the list above: " \\
+  && curl \-L \-o "${REPLY/\\~/$HOME}/man1/run\.sh\.1" https://github\.com/evnp/run\.sh/raw/main/man/run\.sh\.1
+.fi
+.RE
+.P
+Verify installation:
+.RS 2
+.nf
+run\.sh \-v
+==> run\.sh 2\.0\.2
+
+brew test run\.sh
+==> Testing run\.sh
+==> /opt/homebrew/Cellar/run\.sh/2\.0\.2/bin/run\.sh test \-\-print 1234 hello world
+.fi
+.RE
+.SH Tests
+.P
+Run once:
+.RS 2
+.nf
+npm install
+npm test
+.fi
+.RE
+.P
+Use \fBfswatch\fP to re\-run tests on file changes:
+.RS 2
+.nf
+brew install fswatch
+npm install
+npm run testw
+.fi
+.RE
+.P
+Non\-OSX: replace \fBbrew install fswatch\fP with package manager of choice 
+.SH License
+.P
+MIT License
+.P
+Copyright  2024 Evan Campbell Purcer
+.P
+Permission is hereby granted, free of charge, to any person obtaining a copy
+.br
+of this software and associated documentation files , to deal
+.br
+in the Software without restriction, including without limitation the rights
+.br
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+.br
+copies of the Software, and to permit persons to whom the Software is
+.br
+furnished to do so, subject to the following conditions:
+.P
+The above copyright notice and this permission notice shall be included in all
+.br
+copies or substantial portions of the Software\.
+.P
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+.br
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+.br
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT\. IN NO EVENT SHALL THE
+.br
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+.br
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+.br
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+.br
+SOFTWARE\.
+
