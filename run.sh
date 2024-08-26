@@ -85,6 +85,9 @@ EOF
 			exit 1
 		fi
 		sed -E "s~\t${vb}make --makefile ${mf} ~\t${vb}make ~" "${mf}" > ./Makefile
+	elif [[ " $* " == *' --print-makefile '* ]]
+	then
+		sed -E "s~\t${vb}make --makefile ${mf} ~\t${vb}make ~" "${mf}"
 	else
 		make "${make_args[@]}"
 	fi
