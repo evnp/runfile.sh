@@ -2,13 +2,16 @@
 
 # run :: v1.0.0
 
-set -euo pipefail
+function run ( set -euo pipefail; local mf="" vb="" make_args=()
 
-function run {
-	local mf vb make_args
+	# Find nearest Runfile and navigate to directory which contains it:
+	while [[ ! -f './Runfile' ]]; do
+		[[ "$( pwd )" == "$HOME" ]] && echo 'No Runfile found.' && exit 1
+		cd ..
+	done
 
 	mf="$( mktemp )" # makefile
-	vb="@"           # verbose - @ causes make to execute commands silently
+	vb="@"					 # verbose - @ causes make to execute commands silently
 	make_args=( --makefile "${mf}" ) # arguments that will be passed on to make
 
 	for arg in "$@"
@@ -51,20 +54,20 @@ EOF
 
 	rm "${mf}"
 	exit 0
-}
+)
 
 run "$@"
 
 # Example Runfile (recommended formatting):
 # ```
 # start :: start app
-#   mix start
+#		mix start
 #
 # kill :: kill app
-#   mix stop
+#		mix stop
 #
 # repl :: start shell
-#   iex -S mix
+#		iex -S mix
 # ```
 # Example Runfile (compact formatting):
 # ```
@@ -76,7 +79,7 @@ run "$@"
 # iex -S mix
 # ```
 # $ run
-#     s start · start app
-#     k kill · kill app
-#     r repl · start shell
+#			s start · start app
+#			k kill · kill app
+#			r repl · start shell
 
