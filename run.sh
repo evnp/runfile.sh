@@ -5,7 +5,7 @@
 function run ( set -euo pipefail; local mf="" vb="" make_args=()
 
 	# Create a new Runfile from template, then exit:
-	if [[ " $* " == *' --new '* ]]
+	if [[ " $* " == *' --write-runfile '* ]]
 	then
 		[[ -f './Runfile' ]] && echo 'Runfile already exists.' && exit 1
 cat <<EOF > Runfile
@@ -34,16 +34,35 @@ EOF
 	do
 		if [[ "$( pwd )" == "$HOME" ]]
 		then
-			echo 'No Runfile found. Use `run --new` to create one here.'
+			echo 'No Runfile found. Use `run --write-runfile` to create one here.'
 			exit 1
 		fi
 		cd ..
 	done
 
+	# Print nearest Runfile then exit:
+	if [[ " $* " == *' --print-runfile '* ]]
+	then
+		cat Runfile
+		exit 0
+	fi
+
 	# Open nearest Runfile with $EDITOR:
-	if [[ " $* " == *' --open '* ]]
+	if [[ " $* " == *' --open-runfile '* ]]
 	then
 		$EDITOR Runfile
+		exit 0
+	fi
+
+	# Open nearest Makefile with $EDITOR:
+	if [[ " $* " == *' --open-makefile '* ]]
+	then
+		while [[ ! -f './Makefile' ]]
+		do
+			[[ "$( pwd )" == "$HOME" ]] && echo 'No Makefile found.' && exit 1
+			cd ..
+		done
+		$EDITOR Makefile
 		exit 0
 	fi
 
@@ -66,7 +85,7 @@ h help :: .usage
 
 $(
 	sed -Ee "s~^[[:space:]]*~\t${vb}~" \
-			-e "s~^\t${vb}([a-zA-Z0-9])([a-zA-Z0-9]+): (.*)$~\1 \1\2 :: # \3~" \
+			-e "s~^\t${vb}([a-zA-Z0-9_-])([a-zA-Z0-9_-]+): (.*)$~\1 \1\2 :: # \3~" \
 			-e "s~^\t${vb}run ~\t${vb}make --makefile ${mf} ~" \
 			-e "s~\t${vb}$~\t~" \
 		Runfile
@@ -85,13 +104,19 @@ EOF
 			exit 1
 		fi
 		sed -E "s~\t${vb}make --makefile ${mf} ~\t${vb}make ~" "${mf}" > ./Makefile
-	elif [[ " $* " == *' --print-makefile '* ]]
-	then
-		sed -E "s~\t${vb}make --makefile ${mf} ~\t${vb}make ~" "${mf}"
-	else
-		make "${make_args[@]}"
+		rm "${mf}"
+		exit 0
 	fi
 
+	# Print generated Makefile then exit:
+	if [[ " $* " == *' --print-makefile '* ]]
+	then
+		sed -E "s~\t${vb}make --makefile ${mf} ~\t${vb}make ~" "${mf}"
+		rm "${mf}"
+		exit 0
+	fi
+
+	make "${make_args[@]}"
 	rm "${mf}"
 	exit 0
 )
