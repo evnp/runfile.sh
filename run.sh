@@ -4,9 +4,39 @@
 
 function run ( set -euo pipefail; local mf="" vb="" make_args=()
 
+	# Create a new Runfile from template, then exit:
+	if [[ " $* " == *' --new '* ]]
+	then
+		[[ -f './Runfile' ]] && echo 'Runfile already exists.' && exit 1
+cat <<EOF > Runfile
+start :: start app
+  echo "start app"
+
+end :: stop app
+  echo "stop app"
+
+client :: open client
+  echo "open client"
+
+server :: attach to server
+  echo "attach to server"
+
+repl :: start shell
+  echo "start shell"
+EOF
+		read -rsn1 -p "Press any key to open Runfile with $EDITOR · CTRL+C to exit"
+		$EDITOR Runfile
+		exit 0
+	fi
+
 	# Find nearest Runfile and navigate to directory which contains it:
-	while [[ ! -f './Runfile' ]]; do
-		[[ "$( pwd )" == "$HOME" ]] && echo 'No Runfile found.' && exit 1
+	while [[ ! -f './Runfile' ]]
+	do
+		if [[ "$( pwd )" == "$HOME" ]]
+		then
+			echo 'No Runfile found. Use `run --new` to create one here.'
+			exit 1
+		fi
 		cd ..
 	done
 
@@ -63,7 +93,7 @@ run "$@"
 # start :: start app
 #		mix start
 #
-# kill :: kill app
+# end :: stop app
 #		mix stop
 #
 # repl :: start shell
