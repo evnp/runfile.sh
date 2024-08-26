@@ -9,19 +9,19 @@ function run ( set -euo pipefail; local mf="" vb="" make_args=()
 	then
 		[[ -f './Runfile' ]] && echo 'Runfile already exists.' && exit 1
 cat <<EOF > Runfile
-start :: start app
+start: start app
   echo "start app"
 
-end :: stop app
+end: stop app
   echo "stop app"
 
-client :: open client
+client: open client
   echo "open client"
 
-server :: attach to server
+server: attach to server
   echo "attach to server"
 
-repl :: start shell
+repl: start shell
   echo "start shell"
 EOF
 		read -rsn1 -p "Press any key to open Runfile with $EDITOR · CTRL+C to exit"
@@ -66,7 +66,7 @@ h help :: .usage
 
 $(
 	sed -Ee "s~^[[:space:]]*~\t${vb}~" \
-			-e "s~^\t${vb}([a-zA-Z0-9])([a-zA-Z0-9]+) :: (.*)$~\1 \1\2 :: # \3~" \
+			-e "s~^\t${vb}([a-zA-Z0-9])([a-zA-Z0-9]+): (.*)$~\1 \1\2 :: # \3~" \
 			-e "s~^\t${vb}run ~\t${vb}make --makefile ${mf} ~" \
 			-e "s~\t${vb}$~\t~" \
 		Runfile
@@ -100,22 +100,22 @@ run "$@"
 
 # Example Runfile (recommended formatting):
 # ```
-# start :: start app
+# start: start app
 #		mix start
 #
-# end :: stop app
+# end: stop app
 #		mix stop
 #
-# repl :: start shell
+# repl: start shell
 #		iex -S mix
 # ```
 # Example Runfile (compact formatting):
 # ```
-# start :: start app
+# start: start app
 # mix start
-# kill :: kill app
+# kill: kill app
 # mix stop
-# repl :: start shell
+# repl: start shell
 # iex -S mix
 # ```
 # $ run
