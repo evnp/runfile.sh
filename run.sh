@@ -40,6 +40,13 @@ EOF
 		cd ..
 	done
 
+	# Open nearest Runfile with $EDITOR:
+	if [[ " $* " == *' --open '* ]]
+	then
+		$EDITOR Runfile
+		exit 0
+	fi
+
 	mf="$( mktemp )" # makefile
 	vb="@"					 # verbose - @ causes make to execute commands silently
 	make_args=( --makefile "${mf}" ) # arguments that will be passed on to make
