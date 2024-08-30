@@ -1,13 +1,29 @@
 #!/usr/bin/env bash
 
-# run :: v1.0.0
+# run :: v0.0.1
 
-function run ( set -euo pipefail; local mf="" vb="" make_args=()
-
-	# Create a new Runfile from template, then exit:
-	if [[ " $* " == *' --write-runfile '* ]]
+function create-runfile() {
+	if [[ -f './Runfile' ]]
 	then
-		[[ -f './Runfile' ]] && echo 'Runfile already exists.' && exit 1
+		echo 'Runfile already exists.'
+		exit 1
+	fi
+
+	if [[ " $* " == *' --compact '* ]]
+	then
+cat <<EOF > Runfile
+start: start app
+echo "start app"
+end: stop app
+echo "stop app"
+client: open client
+echo "open client"
+server: attach to server
+echo "attach to server"
+repl: start shell
+echo "start shell"
+EOF
+	else
 cat <<EOF > Runfile
 start: start app
   echo "start app"
@@ -24,47 +40,70 @@ server: attach to server
 repl: start shell
   echo "start shell"
 EOF
-		read -rsn1 -p "Press any key to open Runfile with $EDITOR · CTRL+C to exit"
-		$EDITOR Runfile
-		exit 0
 	fi
+}
 
-	# Find nearest Runfile and navigate to directory which contains it:
-	while [[ ! -f './Runfile' ]]
+function lowercase-file() {
+	echo "$1" | tr [A-Z] [a-z]
+}
+
+function uppercase-file() {
+	echo "$1" | tr [a-z] [A-Z]
+}
+
+function titlecase-file() {
+  echo "$( echo "$1" | cut -c1 | tr [a-z] [A-Z] )$( echo "$1" | cut -c2- )"
+}
+
+function smartcase-file() { local name=''
+	name="$( titlecase-file "$1" )"
+	! [[ -f "${name}" ]] && name="$( lowercase-file "${name}" )"
+	! [[ -f "${name}" ]] && name="$( uppercase-file "${name}" )"
+	echo "${name}"
+}
+
+function print-file() {
+	cat "$( smartcase-file "$1" )"
+}
+
+function edit-file() { local name=''
+	name="$( smartcase-file "$1" )"
+	if [[ " $* " != *' --noedit '* ]]
+	then
+		[[ " $* " == *' --confirm '* && " $* " != *' --noconfirm '* ]] && \
+			read -rsn1 -p "Press any key to edit ${name} with $EDITOR · CTRL+C to exit"
+		$EDITOR "${name}"
+	fi
+}
+
+function cd-to-nearest-file() { local lower='' upper='' title=''
+	lower="$( lowercase-file "$1" )"
+	upper="$( uppercase-file "$1" )"
+	title="$( titlecase-file "$1" )"
+	while ! [[ -f "./${lower}" || -f "./${upper}" || -f "./${title}" ]]
 	do
 		if [[ "$( pwd )" == "$HOME" ]]
 		then
-			echo 'No Runfile found. Use `run --write-runfile` to create one here.'
+			echo "No ${title} found."
+			echo "Use `run --create-${lower}` to create one here."
 			exit 1
 		fi
 		cd ..
 	done
+}
 
-	# Print nearest Runfile then exit:
-	if [[ " $* " == *' --print-runfile '* ]]
-	then
-		cat Runfile
-		exit 0
-	fi
+function main() ( set -euo pipefail; local mf='' vb='' make_args=()
+	# Handle various optional actions:
+	[[ " $* " == *' --create-runfile '* ]] && \
+		create-runfile "$@" && edit-file runfile --confirm "$@" && exit 0
+	[[ " $* " == *' --print-runfile '* ]] && \
+		cd-to-nearest-file runfile && print-file runfile && exit 0
+	[[ " $* " == *' --edit-runfile '* ]] && \
+		cd-to-nearest-file runfile && edit-file runfile "$@" && exit 0
+	[[ " $* " == *' --edit-makefile '* ]] && \
+		cd-to-nearest-file makefile && edit-file makefile "$@" && exit 0
 
-	# Open nearest Runfile with $EDITOR:
-	if [[ " $* " == *' --open-runfile '* ]]
-	then
-		$EDITOR Runfile
-		exit 0
-	fi
-
-	# Open nearest Makefile with $EDITOR:
-	if [[ " $* " == *' --open-makefile '* ]]
-	then
-		while [[ ! -f './Makefile' ]]
-		do
-			[[ "$( pwd )" == "$HOME" ]] && echo 'No Makefile found.' && exit 1
-			cd ..
-		done
-		$EDITOR Makefile
-		exit 0
-	fi
+	cd-to-nearest-file Runfile
 
 	mf="$( mktemp )" # makefile
 	vb="@"					 # verbose - @ causes make to execute commands silently
@@ -84,15 +123,15 @@ cat <<EOF > "${mf}"
 h help :: .usage
 
 $(
-	sed -Ee "s~^[[:space:]]*~\t${vb}~" \
-			-e "s~^\t${vb}([a-zA-Z0-9_-])([a-zA-Z0-9_-]+): (.*)$~\1 \1\2 :: # \3~" \
-			-e "s~^\t${vb}run ~\t${vb}make --makefile ${mf} ~" \
-			-e "s~\t${vb}$~\t~" \
+	sed -Ee "s|^[[:space:]]*|\t${vb}|" \
+			-e "s|^\t${vb}([a-zA-Z0-9_-])([a-zA-Z0-9_-]+): (.*)$|\1 \1\2 :: # \3|" \
+			-e "s|^\t${vb}run |\t${vb}make --makefile ${mf} |" \
+			-e "s|\t${vb}$|\t|" \
 		Runfile
 )
 
 .usage:
-	@grep -E "^[^@]*:.*#" \$(MAKEFILE_LIST) | sed -E "s~(.*):(.*):.*#(.*)~	\\1·\\2\\3~"
+	@grep -E "^[^@]*:.*#" \$(MAKEFILE_LIST) | sed -E "s/(.*):(.*):.*#(.*)/	\\1·\\2\\3/"
 EOF
 
 	if [[ " $* " == *' --write-makefile '* || " $* " == *' --overwrite-makefile '* ]]
@@ -103,7 +142,7 @@ EOF
 			rm "${mf}"
 			exit 1
 		fi
-		sed -E "s~\t${vb}make --makefile ${mf} ~\t${vb}make ~" "${mf}" > ./Makefile
+		sed -E "s|\t${vb}make --makefile ${mf} |\t${vb}make |" "${mf}" > ./Makefile
 		rm "${mf}"
 		exit 0
 	fi
@@ -111,7 +150,7 @@ EOF
 	# Print generated Makefile then exit:
 	if [[ " $* " == *' --print-makefile '* ]]
 	then
-		sed -E "s~\t${vb}make --makefile ${mf} ~\t${vb}make ~" "${mf}"
+		sed -E "s|\t${vb}make --makefile ${mf} |\t${vb}make |" "${mf}"
 		rm "${mf}"
 		exit 0
 	fi
@@ -121,30 +160,4 @@ EOF
 	exit 0
 )
 
-run "$@"
-
-# Example Runfile (recommended formatting):
-# ```
-# start: start app
-#		mix start
-#
-# end: stop app
-#		mix stop
-#
-# repl: start shell
-#		iex -S mix
-# ```
-# Example Runfile (compact formatting):
-# ```
-# start: start app
-# mix start
-# kill: kill app
-# mix stop
-# repl: start shell
-# iex -S mix
-# ```
-# $ run
-#			s start · start app
-#			k kill · kill app
-#			r repl · start shell
-
+main "$@"
