@@ -13,32 +13,32 @@ function create-runfile() {
 	if [[ " $* " == *' --compact '* ]]
 	then
 cat <<EOF > Runfile
-start: start app
+s start: start app
 echo "start app"
-end: stop app
+e end: stop app
 echo "stop app"
-frontend: open frontend app
+f frontend: open frontend app
 echo "open frontend app"
-backend: attach to backend server
+b backend: attach to backend server
 echo "attach to backend server"
-repl: start shell
+r repl: start shell
 echo "start shell"
 EOF
 	else
 cat <<EOF > Runfile
-start: start app
+s start: start app
 	echo "start app"
 
-end: stop app
+e end: stop app
 	echo "stop app"
 
-frontend: open frontend app
+f frontend: open frontend app
 	echo "open frontend app"
 
-backend: attach to backend server
+b backend: attach to backend server
 	echo "attach to backend server"
 
-repl: start shell
+r repl: start shell
 	echo "start shell"
 EOF
 	fi
@@ -135,11 +135,11 @@ function main() ( set -euo pipefail; local mf='' vb='' make_args=()
 # ::::::::::::::::::::::::::::::::::::::::::
 # Construct temporary Makefile from Runfile:
 cat <<EOF > "${mf}"
-h help: .usage
+help: .usage
 
 $(
 	sed -Ee "s|^[[:space:]]*|\t${vb}|" \
-			-e "s|^\t${vb}([a-zA-Z0-9_-])([a-zA-Z0-9_-]+): (.*)$|\1 \1\2: # \3|" \
+			-e "s|^\t${vb}([[:space:]a-zA-Z0-9_-]+): (.*)$|\1: # \2|" \
 			-e "s|^\t${vb}run |\t${vb}make --makefile ${mf} |" \
 			-e "s|\t${vb}$|\t|" \
 		Runfile
@@ -147,7 +147,7 @@ $(
 
 .usage:
 	@grep -E "^[[:space:]a-zA-Z0-9_-]+: # " \$(MAKEFILE_LIST) \\
-	| sed -Ee "s/^/\\t/" -e "s/: # / · /"
+	| sed -Ee 's/^/\\t/' -e 's/: # / · /'
 EOF
 # Done with temporary Makefile construction.
 # ::::::::::::::::::::::::::::::::::::::::::
