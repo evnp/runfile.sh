@@ -3,7 +3,7 @@
 # run :: v0.0.1
 
 function create-runfile() {
-	if [[ " $* " != *' --overwrite-runfile '* ]] && [[ -f 'Runfile' ]]
+	if [[ " $* " != *' --overwrite-runfile '* ]] && [[ -e 'Runfile' ]]
 	then
 		echo 'Runfile already exists. To overwrite, use:'
 		echo "run --overwrite-runfile"
@@ -58,8 +58,8 @@ function titlecase-file() {
 
 function smartcase-file() { local name=''
 	name="$( titlecase-file "$1" )"
-	! [[ -f "${name}" ]] && name="$( lowercase-file "${name}" )"
-	! [[ -f "${name}" ]] && name="$( uppercase-file "${name}" )"
+	[[ -d "${name}" ]] || ! [[ -e "${name}" ]] && name="$( lowercase-file "${name}" )"
+	[[ -d "${name}" ]] || ! [[ -e "${name}" ]] && name="$( uppercase-file "${name}" )"
 	echo "${name}"
 }
 
@@ -85,7 +85,8 @@ function cd-to-nearest-file() { local lower='' upper='' title=''
 	lower="$( lowercase-file "$1" )"
 	upper="$( uppercase-file "$1" )"
 	title="$( titlecase-file "$1" )"
-	while ! [[ -f "./${lower}" || -f "./${upper}" || -f "./${title}" ]]
+	while [[ -d "./${lower}" || -d "./${upper}" || -d "./${title}" ]] || \
+			! [[ -e "./${lower}" || -e "./${upper}" || -e "./${title}" ]]
 	do
 		if [[ "$( pwd )" != "$HOME" ]]
 		then
@@ -157,7 +158,7 @@ EOF
 	# --overwrite-makefile :: Can be used to overwrite when Makefile already exists.
 	if [[ " $* " == *' --create-makefile '* || " $* " == *' --overwrite-makefile '* ]]
 	then
-		if [[ " $* " != *' --overwrite-makefile '* ]] && [[ -f 'Makefile' ]]
+		if [[ " $* " != *' --overwrite-makefile '* ]] && [[ -e 'Makefile' ]]
 		then
 			echo 'Makefile already exists. To overwrite, use:'
 			echo "make --overwrite-makefile"
