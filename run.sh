@@ -17,10 +17,10 @@ start: start app
 echo "start app"
 end: stop app
 echo "stop app"
-client: open client
-echo "open client"
-server: attach to server
-echo "attach to server"
+frontend: open frontend app
+echo "open frontend app"
+backend: attach to backend server
+echo "attach to backend server"
 repl: start shell
 echo "start shell"
 EOF
@@ -32,11 +32,11 @@ start: start app
 end: stop app
 	echo "stop app"
 
-client: open client
-	echo "open client"
+frontend: open frontend app
+	echo "open frontend app"
 
-server: attach to server
-	echo "attach to server"
+backend: attach to backend server
+	echo "attach to backend server"
 
 repl: start shell
 	echo "start shell"
@@ -119,9 +119,6 @@ function main() ( set -euo pipefail; local mf='' vb='' make_args=()
 	mf="$( mktemp )"	# Temporary makefile which we will pass to make.
 	vb="@"						# Verbose - @ causes make to execute commands silently.
 	make_args=()			# Arguments that will be passed on to make.
-	make_sepr=" :: "	# Use double-colon to separate targets from descriptions in
-										# Makefile. This allows running targets without dependencies,
-										# similar to .PHONY rules.
 
 	# Handle these args which we don't want to pass on to make:
 	# --verbose / -v
@@ -135,27 +132,28 @@ function main() ( set -euo pipefail; local mf='' vb='' make_args=()
 		fi
 	done
 
-# ··········································
+# ::::::::::::::::::::::::::::::::::::::::::
 # Construct temporary Makefile from Runfile:
 cat <<EOF > "${mf}"
-h help :: .usage
+h help: .usage
 
 $(
 	sed -Ee "s|^[[:space:]]*|\t${vb}|" \
-			-e "s|^\t${vb}([a-zA-Z0-9_-])([a-zA-Z0-9_-]+): (.*)$|\1 \1\2${make_sepr}# \3|" \
+			-e "s|^\t${vb}([a-zA-Z0-9_-])([a-zA-Z0-9_-]+): (.*)$|\1 \1\2: # \3|" \
 			-e "s|^\t${vb}run |\t${vb}make --makefile ${mf} |" \
 			-e "s|\t${vb}$|\t|" \
 		Runfile
 )
 
 .usage:
-	@grep -E "^[^@]*:.*#" \$(MAKEFILE_LIST) | sed -E "s/(.*):(.*):.*#(.*)/	\\1·\\2\\3/"
+	@grep -E "^[[:space:]a-zA-Z0-9_-]+: # " \$(MAKEFILE_LIST) \\
+	| sed -Ee "s/^/\\t/" -e "s/: # / · /"
 EOF
 # Done with temporary Makefile construction.
-# ··········································
+# ::::::::::::::::::::::::::::::::::::::::::
 
-	# --create-makefile		 :: Write generated Makefile then exit.
-	# --overwrite-makefile :: Can be used to overwrite when Makefile already exists.
+	# --create-makefile : Write generated Makefile then exit.
+	# --overwrite-makefile : Can be used to overwrite when Makefile already exists.
 	if [[ " $* " == *' --create-makefile '* || " $* " == *' --overwrite-makefile '* ]]
 	then
 		if [[ " $* " != *' --overwrite-makefile '* ]] && [[ -e 'Makefile' ]]
@@ -171,7 +169,7 @@ EOF
 		fi
 	fi
 
-	# --print-makefile :: Print generated Makefile then exit.
+	# --print-makefile : Print generated Makefile then exit.
 	if [[ " $* " == *' --print-makefile '* ]]
 	then
 		print-makefile "${mf}"
@@ -179,7 +177,7 @@ EOF
 		exit 0
 	fi
 
-	# Main Path :: Invoke make with generated makefile and all other arguments.
+	# Main Path : Invoke make with generated makefile and all other arguments.
 	make --makefile "${mf}" "${make_args[@]}"
 	rm "${mf}"
 	exit 0
