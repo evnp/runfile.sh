@@ -27,33 +27,33 @@ EOF
 	else
 cat <<EOF > Runfile
 start: start app
-  echo "start app"
+	echo "start app"
 
 end: stop app
-  echo "stop app"
+	echo "stop app"
 
 client: open client
-  echo "open client"
+	echo "open client"
 
 server: attach to server
-  echo "attach to server"
+	echo "attach to server"
 
 repl: start shell
-  echo "start shell"
+	echo "start shell"
 EOF
 	fi
 }
 
 function lowercase-file() {
-	echo "$1" | tr [A-Z] [a-z]
+	echo "$1" | tr '[:upper:]' '[:lower:]'
 }
 
 function uppercase-file() {
-	echo "$1" | tr [a-z] [A-Z]
+	echo "$1" | tr '[:lower:]' '[:upper:]'
 }
 
 function titlecase-file() {
-  echo "$( echo "$1" | cut -c1 | tr [a-z] [A-Z] )$( echo "$1" | cut -c2- )"
+	echo "$( echo "$1" | cut -c1 | tr '[:lower:]' '[:upper:]' )$( echo "$1" | cut -c2- )"
 }
 
 function smartcase-file() { local name=''
@@ -92,8 +92,8 @@ function cd-to-nearest-file() { local lower='' upper='' title=''
 		then
 			cd ..
 		else
-			echo "No ${title} found."
-			echo "Use `run --create-${lower}` to create one here."
+			echo "No ${title} found. To create one here, use:"
+			echo "run --create-${lower}"
 			# Note: This message pertains to the user's shell which _won't_ have
 			# changed directory, because this script's main function uses a subshell.
 			# So there's no need to change directory back to where we started here.
@@ -135,7 +135,7 @@ function main() ( set -euo pipefail; local mf='' vb='' make_args=()
 		fi
 	done
 
-############################################
+# ··········································
 # Construct temporary Makefile from Runfile:
 cat <<EOF > "${mf}"
 h help :: .usage
@@ -152,9 +152,9 @@ $(
 	@grep -E "^[^@]*:.*#" \$(MAKEFILE_LIST) | sed -E "s/(.*):(.*):.*#(.*)/	\\1·\\2\\3/"
 EOF
 # Done with temporary Makefile construction.
-############################################
+# ··········································
 
-	# --create-makefile    :: Write generated Makefile then exit.
+	# --create-makefile		 :: Write generated Makefile then exit.
 	# --overwrite-makefile :: Can be used to overwrite when Makefile already exists.
 	if [[ " $* " == *' --create-makefile '* || " $* " == *' --overwrite-makefile '* ]]
 	then
