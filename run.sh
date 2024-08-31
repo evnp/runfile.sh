@@ -14,6 +14,7 @@ function create-runfile() {
 	then
 cat <<EOF > Runfile
 s start: start app
+run end
 echo "start app"
 e end: stop app
 echo "stop app"
@@ -21,12 +22,13 @@ f frontend: open frontend app
 echo "open frontend app"
 b backend: attach to backend server
 echo "attach to backend server"
-r repl: start shell
-echo "start shell"
+r repl: start shell in project environment
+echo "start shell environment"
 EOF
 	else
 cat <<EOF > Runfile
 s start: start app
+	run end
 	echo "start app"
 
 e end: stop app
@@ -58,8 +60,8 @@ function titlecase-file() {
 
 function smartcase-file() { local name=''
 	name="$( titlecase-file "$1" )"
-	[[ -d "${name}" ]] || ! [[ -e "${name}" ]] && name="$( lowercase-file "${name}" )"
-	[[ -d "${name}" ]] || ! [[ -e "${name}" ]] && name="$( uppercase-file "${name}" )"
+	! [[ -e "${name}" && ! -d "${name}" ]] && name="$( lowercase-file "${name}" )"
+	! [[ -e "${name}" && ! -d "${name}" ]] && name="$( uppercase-file "${name}" )"
 	echo "${name}"
 }
 
@@ -78,7 +80,7 @@ function print-file-smartcase() {
 }
 
 function print-makefile() {
-	sed -E "s|\t${vb}make --makefile ${mf} |\t${vb}make |" "$@"
+	sed -E "s!\t${vb}make --makefile ${mf} !\t${vb}make !" "$@"
 }
 
 function cd-to-nearest-file() { local lower='' upper='' title=''
@@ -102,7 +104,8 @@ function cd-to-nearest-file() { local lower='' upper='' title=''
 	done
 }
 
-function main() ( set -euo pipefail; local mf='' vb='' make_args=()
+function main() ( set -euo pipefail; local mf='' vb='' make_args=() rewrite=""
+
 	# Handle various optional actions:
 	[[ " $* " == *' --create-runfile '* || " $* " == *' --overwrite-runfile '* ]] && \
 		create-runfile "$@" && edit-file-smartcase runfile --confirm "$@" && exit 0
@@ -116,9 +119,25 @@ function main() ( set -euo pipefail; local mf='' vb='' make_args=()
 	# If no runfile in current dir, navigate up looking for one until we reach $HOME:
 	cd-to-nearest-file runfile
 
+	# Local values:
 	mf="$( mktemp )"	# Temporary makefile which we will pass to make.
 	vb="@"						# Verbose - @ causes make to execute commands silently.
 	make_args=()			# Arguments that will be passed on to make.
+
+	# Existing Makefile Compatibility:
+	# If 'run cmd' or 'make cmd' appears within another command in a Runfile,
+	# normally we'd rewrite these both to 'make --makefile ${mf}' to avoid invoking
+	# run.sh recursively. However, if a separate Makefile exists in the same directory
+	# as the current Runfile we're executing a command for, we WON'T rewrite 'make cmd'
+	# in this way. In that case, leaving 'make cmd' alone allows the user to reference
+	# a command in the existing Makefile from their run.sh command.
+	rewrite="(make|run)"
+	if [[ -e 'Makefile' && ! -d 'Makefile' ]] \
+	|| [[ -e 'makefile' && ! -d 'makefile' ]] \
+	|| [[ -e 'MAKEFILE' && ! -d 'MAKEFILE' ]]
+	then
+		rewrite="run"
+	fi
 
 	# Handle these args which we don't want to pass on to make:
 	# --verbose / -v
@@ -138,10 +157,10 @@ cat <<EOF > "${mf}"
 help: .usage
 
 $(
-	sed -Ee "s|^[[:space:]]*|\t${vb}|" \
-			-e "s|^\t${vb}([[:space:]a-zA-Z0-9_-]+): (.*)$|\1: # \2|" \
-			-e "s|^\t${vb}run |\t${vb}make --makefile ${mf} |" \
-			-e "s|\t${vb}$|\t|" \
+	sed -Ee "s!^[[:space:]]*!\t${vb}!" \
+			-e "s!^\t${vb}([[:space:]a-zA-Z0-9_-]+): (.*)\$!\1: # \2!" \
+			-e "s!^\t${vb}${rewrite} !\t${vb}make --makefile ${mf} !" \
+			-e "s!\t${vb}\$!\t!" \
 		Runfile
 )
 
@@ -156,7 +175,8 @@ EOF
 	# --overwrite-makefile : Can be used to overwrite when Makefile already exists.
 	if [[ " $* " == *' --create-makefile '* || " $* " == *' --overwrite-makefile '* ]]
 	then
-		if [[ " $* " != *' --overwrite-makefile '* ]] && [[ -e 'Makefile' ]]
+		if [[ " $* " != *' --overwrite-makefile '* ]] \
+		&& [[ -e 'Makefile' && ! -d 'Makefile' ]]
 		then
 			echo 'Makefile already exists. To overwrite, use:'
 			echo "make --overwrite-makefile"
