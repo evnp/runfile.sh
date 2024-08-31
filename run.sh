@@ -6,7 +6,7 @@ function create-runfile() {
 	if [[ " $* " != *' --overwrite-runfile '* ]] && [[ -e 'Runfile' ]]
 	then
 		echo 'Runfile already exists. To overwrite, use:'
-		echo "run --overwrite-runfile"
+		echo 'run --overwrite-runfile'
 		exit 1
 	fi
 
@@ -80,7 +80,7 @@ function print-file-smartcase() {
 }
 
 function print-makefile() {
-	sed -E "s!\t${vb}make --makefile ${mf} !\t${vb}make !" "$@"
+	sed -E "s!\t${at}make --makefile ${mf} !\t${at}make !" "$@"
 }
 
 function cd-to-nearest-file() { local lower='' upper='' title=''
@@ -104,7 +104,7 @@ function cd-to-nearest-file() { local lower='' upper='' title=''
 	done
 }
 
-function main() ( set -euo pipefail; local mf='' vb='' make_args=() rewrite=""
+function main() ( set -euo pipefail; local mf='' at='' arg='' args=() cmd="" rewrite=""
 
 	# Handle various optional actions:
 	[[ " $* " == *' --create-runfile '* || " $* " == *' --overwrite-runfile '* ]] && \
@@ -121,8 +121,8 @@ function main() ( set -euo pipefail; local mf='' vb='' make_args=() rewrite=""
 
 	# Local values:
 	mf="$( mktemp )"	# Temporary makefile which we will pass to make.
-	vb="@"						# Verbose - @ causes make to execute commands silently.
-	make_args=()			# Arguments that will be passed on to make.
+	at="@"						# @-prefix causes make to execute commands silently.
+	args=()						# Arguments that will be passed on to invoked run command.
 
 	# Existing Makefile Compatibility:
 	# If 'run cmd' or 'make cmd' appears within another command in a Runfile,
@@ -139,15 +139,28 @@ function main() ( set -euo pipefail; local mf='' vb='' make_args=() rewrite=""
 		rewrite="run"
 	fi
 
-	# Handle these args which we don't want to pass on to make:
-	# --verbose / -v
+	# Handle these args which we don't want to pass on to command:
+	# --print-command, --dry-run-command,
+	# --overwrite-runfile, --overwrite-makefile,
+	# --create-runfile, --create-makefile,
+	# --print-runfile, --print-makefile,
+	# --edit-runfile, --edit-makefile,
 	for arg in "$@"
 	do
-		if [[ "${arg}" == '--verbose' || "${arg}" == '-v' ]]
+		if [[ "${arg}" == '--print-command' || "${arg}" == '--dry-run-command' ]]
 		then
-			vb="" # (verbose) Remove @ so that make prints commands before executing them.
-		else
-			make_args+=( "${arg}" )
+			at="" # Remove @-prefix so that make prints commands before executing them.
+		elif ! [[ "${arg}" == '--overwrite-runfile' || "${arg}" == '--overwrite-makefile' ]] \
+			&& ! [[ "${arg}" == '--create-runfile' || "${arg}" == '--create-makefile' ]] \
+			&& ! [[ "${arg}" == '--print-runfile' || "${arg}" == '--print-makefile' ]] \
+			&& ! [[ "${arg}" == '--edit-runfile' || "${arg}" == '--edit-makefile' ]]
+		then
+			if [[ -z "${cmd}" ]]
+			then
+				cmd="${arg}"
+			else
+				args+=( "${arg}" )
+			fi
 		fi
 	done
 
@@ -157,10 +170,10 @@ cat <<EOF > "${mf}"
 help: .usage
 
 $(
-	sed -Ee "s!^[[:space:]]*!\t${vb}!" \
-			-e "s!^\t${vb}([[:space:]a-zA-Z0-9_-]+): (.*)\$!\1: # \2!" \
-			-e "s!^\t${vb}${rewrite} !\t${vb}make --makefile ${mf} !" \
-			-e "s!\t${vb}\$!\t!" \
+	sed -Ee "s!^[[:space:]]*!\t${at}!" \
+			-e "s!^\t${at}([[:space:]a-zA-Z0-9_-]+): (.*)\$!\1: # \2!" \
+			-e "s!^\t${at}${rewrite} !\t${at}make --makefile ${mf} !" \
+			-e "s!\t${at}\$!\t!" \
 		Runfile
 )
 
@@ -179,7 +192,7 @@ EOF
 		&& [[ -e 'Makefile' && ! -d 'Makefile' ]]
 		then
 			echo 'Makefile already exists. To overwrite, use:'
-			echo "make --overwrite-makefile"
+			echo 'make --overwrite-makefile'
 			rm "${mf}"
 			exit 1
 		else
@@ -198,7 +211,17 @@ EOF
 	fi
 
 	# Main Path : Invoke make with generated makefile and all other arguments.
-	make --makefile "${mf}" "${make_args[@]}"
+	if [[ " $* " == *' --dry-run-command '* ]]
+	then
+		make --makefile "${mf}" --dry-run "${cmd}"
+	elif [[ -n "${cmd}" ]]
+	then
+		make --makefile "${mf}" "${cmd}"
+	else
+		make --makefile "${mf}"
+	fi
+
+	# Clean up temporary Makefile and exit with success:
 	rm "${mf}"
 	exit 0
 )
