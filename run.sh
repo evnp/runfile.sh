@@ -3,9 +3,10 @@
 # run :: v0.0.1
 
 function create-runfile() {
-	if [[ -f './Runfile' ]]
+	if [[ " $* " != *' --overwrite-runfile '* ]] && [[ -f 'Runfile' ]]
 	then
-		echo 'Runfile already exists.'
+		echo 'Runfile already exists. To overwrite, use:'
+		echo "run --overwrite-runfile"
 		exit 1
 	fi
 
@@ -86,7 +87,7 @@ function cd-to-nearest-file() { local lower='' upper='' title=''
 	title="$( titlecase-file "$1" )"
 	while ! [[ -f "./${lower}" || -f "./${upper}" || -f "./${title}" ]]
 	do
-		if ! [[ "$( pwd )" == "$HOME" ]]
+		if [[ "$( pwd )" != "$HOME" ]]
 		then
 			cd ..
 		else
@@ -102,7 +103,7 @@ function cd-to-nearest-file() { local lower='' upper='' title=''
 
 function main() ( set -euo pipefail; local mf='' vb='' make_args=()
 	# Handle various optional actions:
-	[[ " $* " == *' --create-runfile '* ]] && \
+	[[ " $* " == *' --create-runfile '* || " $* " == *' --overwrite-runfile '* ]] && \
 		create-runfile "$@" && edit-file-smartcase runfile --confirm "$@" && exit 0
 	[[ " $* " == *' --print-runfile '* ]] && \
 		cd-to-nearest-file runfile && print-file-smartcase runfile && exit 0
@@ -156,10 +157,10 @@ EOF
 	# --overwrite-makefile :: Can be used to overwrite when Makefile already exists.
 	if [[ " $* " == *' --create-makefile '* || " $* " == *' --overwrite-makefile '* ]]
 	then
-		if ! [[ " $* " == *' --overwrite-makefile '* ]] && [[ -f 'Makefile' ]]
+		if [[ " $* " != *' --overwrite-makefile '* ]] && [[ -f 'Makefile' ]]
 		then
-			echo "Makefile already exists."
-			echo "Use `run --overwrite-makefile` to overwrite."
+			echo 'Makefile already exists. To overwrite, use:'
+			echo "make --overwrite-makefile"
 			rm "${mf}"
 			exit 1
 		else
