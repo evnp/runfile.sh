@@ -1,4 +1,4 @@
-.TH "RUN\.SH" "1" "August 2024"
+.TH "RUNFILE\.SH" "1" "September 2024"
 .SH "NAME"
 \fBrunfile.sh – “tmux-execute” – a lightweight tmux command & layout composer\fR
 .SH DESCRIPTION
@@ -11,14 +11,14 @@ Basic usage:
 Homebrew:
 .RS 2
 .nf
-brew tap evnp/run\.sh && brew install run\.sh
+brew tap evnp/runfile\.sh && brew install runfile\.sh
 .fi
 .RE
 .P
 NPM:
 .RS 2
 .nf
-npm install \-g run\.sh
+npm install \-g runfile\.sh
 .fi
 .RE
 .P
@@ -26,30 +26,30 @@ curl:
 .RS 2
 .nf
 read \-rp $'\\n'"Current \\$PATH:"$'\\n'"${PATH//:/ : }"$'\\n\\n'"Enter a directory from the list above: " \\
-  && curl \-L \-o "${REPLY/\\~/$HOME}/run\.sh" https://github\.com/evnp/run\.sh/raw/main/run\.sh \\
-  && chmod +x "${REPLY/\\~/$HOME}/run\.sh"
+  && curl \-L \-o "${REPLY/\\~/$HOME}/runfile\.sh" https://github\.com/evnp/runfile\.sh/raw/main/runfile\.sh \\
+  && chmod +x "${REPLY/\\~/$HOME}/runfile\.sh"
 .fi
 .RE
 .P
-run\.sh has no external dependencies, but it's good practice to audit code before downrun\.sh onto your system to ensure it contains nothing unexpected\. Please view the full source code for run\.sh here: https://github.com/evnp/runfile.sh/blob/master/runfile.sh
+runfile\.sh has no external dependencies, but it's good practice to audit code before downrunfile\.sh onto your system to ensure it contains nothing unexpected\. Please view the full source code for runfile\.sh here: https://github.com/evnp/runfile.sh/blob/master/runfile.sh
 .P
-If you also want to install run\.sh's man page:
+If you also want to install runfile\.sh's man page:
 .RS 2
 .nf
 read \-rp $'\\n'"Current \\$MANPATH:"$'\\n'"${MANPATH//:/ : }"$'\\n\\n'"Enter a directory from the list above: " \\
-  && curl \-L \-o "${REPLY/\\~/$HOME}/man1/run\.sh\.1" https://github\.com/evnp/run\.sh/raw/main/man/run\.sh\.1
+  && curl \-L \-o "${REPLY/\\~/$HOME}/man1/runfile\.sh\.1" https://github\.com/evnp/runfile\.sh/raw/main/man/runfile\.sh\.1
 .fi
 .RE
 .P
 Verify installation:
 .RS 2
 .nf
-run\.sh \-v
-==> run\.sh 2\.0\.2
+runfile\.sh \-v
+==> runfile\.sh 2\.0\.2
 
-brew test run\.sh
-==> Testing run\.sh
-==> /opt/homebrew/Cellar/run\.sh/2\.0\.2/bin/run\.sh test \-\-print 1234 hello world
+brew test runfile\.sh
+==> Testing runfile\.sh
+==> /opt/homebrew/Cellar/runfile\.sh/2\.0\.2/bin/runfile\.sh test \-\-print 1234 hello world
 .fi
 .RE
 .SH Tests

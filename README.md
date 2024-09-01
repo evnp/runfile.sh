@@ -1,21 +1,21 @@
-run.sh
+runfile.sh
 ----------
 Minimalist project task runner built on the ubiquitous Make.
 
-[![tests](https://github.com/evnp/run.sh/workflows/tests/badge.svg)](https://github.com/evnp/run.sh/actions)
-[![shellcheck](https://github.com/evnp/run.sh/workflows/shellcheck/badge.svg)](https://github.com/evnp/run.sh/actions)
-[![latest release](https://img.shields.io/github/release/evnp/run.sh.svg)](https://github.com/evnp/run.sh/releases/latest)
-[![npm package](https://img.shields.io/npm/v/run.sh.svg)](https://www.npmjs.com/package/run.sh)
-[![license](https://img.shields.io/github/license/evnp/run.sh.svg?color=blue)](https://github.com/evnp/run.sh/blob/master/LICENSE.md)
+[![tests](https://github.com/evnp/runfile.sh/workflows/tests/badge.svg)](https://github.com/evnp/runfile.sh/actions)
+[![shellcheck](https://github.com/evnp/runfile.sh/workflows/shellcheck/badge.svg)](https://github.com/evnp/runfile.sh/actions)
+[![latest release](https://img.shields.io/github/release/evnp/runfile.sh.svg)](https://github.com/evnp/runfile.sh/releases/latest)
+[![npm package](https://img.shields.io/npm/v/runfile.sh.svg)](https://www.npmjs.com/package/runfile.sh)
+[![license](https://img.shields.io/github/license/evnp/runfile.sh.svg?color=blue)](https://github.com/evnp/runfile.sh/blob/master/LICENSE.md)
 
-**Contents** - [Usage](https://github.com/evnp/run.sh#usage) | [Install](https://github.com/evnp/run.sh#install) | [Tests](https://github.com/evnp/run.sh#tests) | [License](https://github.com/evnp/run.sh#license)
+**Contents** - [Usage](https://github.com/evnp/runfile.sh#usage) | [Install](https://github.com/evnp/runfile.sh#install) | [Tests](https://github.com/evnp/runfile.sh#tests) | [License](https://github.com/evnp/runfile.sh#license)
 
-If you'd like to jump straight to installing run.sh, please go to the [Install](https://github.com/evnp/run.sh#install) section or try one of these:
+If you'd like to jump straight to installing runfile.sh, please go to the [Install](https://github.com/evnp/runfile.sh#install) section or try one of these:
 ```sh
-brew tap evnp/run.sh && brew install run.sh
+brew tap evnp/runfile.sh && brew install runfile.sh
 # OR
-npm install -g run.sh
-# OR to curl directly, see https://github.com/evnp/run.sh#install
+npm install -g runfile.sh
+# OR to curl directly, see https://github.com/evnp/runfile.sh#install
 ```
 
 Usage
@@ -28,33 +28,33 @@ Install
 
 Homebrew:
 ```sh
-brew tap evnp/run.sh && brew install run.sh
+brew tap evnp/runfile.sh && brew install runfile.sh
 ```
 NPM:
 ```sh
-npm install -g run.sh
+npm install -g runfile.sh
 ```
 curl:
 ```sh
 read -rp $'\n'"Current \$PATH:"$'\n'"${PATH//:/ : }"$'\n\n'"Enter a directory from the list above: " \
-  && curl -L -o "${REPLY/\~/$HOME}/run.sh" https://github.com/evnp/run.sh/raw/main/run.sh \
-  && chmod +x "${REPLY/\~/$HOME}/run.sh"
+  && curl -L -o "${REPLY/\~/$HOME}/runfile.sh" https://github.com/evnp/runfile.sh/raw/main/runfile.sh \
+  && chmod +x "${REPLY/\~/$HOME}/runfile.sh"
 ```
-run.sh has no external dependencies, but it's good practice to audit code before downrun.sh onto your system to ensure it contains nothing unexpected. Please view the full source code for run.sh here: https://github.com/evnp/run.sh/blob/master/run.sh
+runfile.sh has no external dependencies, but it's good practice to audit code before downrunfile.sh onto your system to ensure it contains nothing unexpected. Please view the full source code for runfile.sh here: https://github.com/evnp/runfile.sh/blob/master/runfile.sh
 
-If you also want to install run.sh's man page:
+If you also want to install runfile.sh's man page:
 ```sh
 read -rp $'\n'"Current \$MANPATH:"$'\n'"${MANPATH//:/ : }"$'\n\n'"Enter a directory from the list above: " \
-  && curl -L -o "${REPLY/\~/$HOME}/man1/run.sh.1" https://github.com/evnp/run.sh/raw/main/man/run.sh.1
+  && curl -L -o "${REPLY/\~/$HOME}/man1/runfile.sh.1" https://github.com/evnp/runfile.sh/raw/main/man/runfile.sh.1
 ```
 Verify installation:
 ```sh
-run.sh -v
-==> run.sh 2.0.2
+runfile.sh -v
+==> runfile.sh 2.0.2
 
-brew test run.sh
-==> Testing run.sh
-==> /opt/homebrew/Cellar/run.sh/2.0.2/bin/run.sh test --print 1234 hello world
+brew test runfile.sh
+==> Testing runfile.sh
+==> /opt/homebrew/Cellar/runfile.sh/2.0.2/bin/runfile.sh test --print 1234 hello world
 ```
 
 Tests

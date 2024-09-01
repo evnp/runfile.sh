@@ -1,0 +1,15 @@
+s start: end#start app
+	echo "start app"
+	run frontend
+
+e end: #stop app
+	echo "stop app"
+
+f frontend:#open frontend app
+	echo "open frontend app"
+
+b backend:#attach to backend server
+	echo "attach to backend server"
+
+r repl :# start shell
+	echo "start shell"

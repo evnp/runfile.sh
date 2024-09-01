@@ -130,10 +130,10 @@ function main() ( set -euo pipefail
 	# Existing Makefile Compatibility:
 	# If 'run cmd' or 'make cmd' appears within another command in a Runfile,
 	# normally we'd rewrite these both to 'make --makefile ${mf}' to avoid invoking
-	# run.sh recursively. However, if a separate Makefile exists in the same directory
+	# runfile.sh recursively. However, if a separate Makefile exists in the same directory
 	# as the current Runfile we're executing a command for, we WON'T rewrite 'make cmd'
 	# in this way. In that case, leaving 'make cmd' alone allows the user to reference
-	# a command in the existing Makefile from their run.sh command.
+	# a command in the existing Makefile from their runfile.sh command.
 	rewrite="(make|run)"
 	if [[ -e 'Makefile' && ! -d 'Makefile' ]] \
 	|| [[ -e 'makefile' && ! -d 'makefile' ]] \

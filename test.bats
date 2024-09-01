@@ -8,7 +8,7 @@ function run() {
 	cmd="${BATS_TEST_DESCRIPTION}"
 	cmd="${cmd/${BATS_TEST_NUMBER} /}"
 	cmd="${cmd/README /}"
-	cmd="${cmd/run.sh/${BATS_TEST_DIRNAME}/run.sh}"
+	cmd="${cmd/runfile.sh/${BATS_TEST_DIRNAME}/runfile.sh}"
 	if [[ "${cmd}" =~ ^([A-Z_]+=[^ ]*) ]]; then
 		# handle env var declarations placed before test command
 		export "${BASH_REMATCH[1]}"
@@ -18,7 +18,7 @@ function run() {
 	fi
 }
 
-@test "${BATS_TEST_NUMBER} run.sh" {
+@test "${BATS_TEST_NUMBER} runfile.sh" {
 	run
 	assert_success
 }
