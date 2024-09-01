@@ -13,34 +13,36 @@ function create-runfile() {
 	if [[ " $* " == *' --compact '* ]]
 	then
 cat <<EOF > Runfile
-s start: start app
-run end
+s start: end # start app
 echo "start app"
-e end: stop app
+run frontend
+e end: # stop app
 echo "stop app"
-f frontend: open frontend app
+f frontend: # open frontend app
+run start
 echo "open frontend app"
-b backend: attach to backend server
+b backend: # attach to backend server
+run start
 echo "attach to backend server"
-r repl: start shell in project environment
+r repl: # start shell in project environment
 echo "start shell environment"
 EOF
 	else
 cat <<EOF > Runfile
-s start: start app
-	run end
+s start: end # start app
 	echo "start app"
+	run frontend
 
-e end: stop app
+e end: # stop app
 	echo "stop app"
 
-f frontend: open frontend app
+f frontend: # open frontend app
 	echo "open frontend app"
 
-b backend: attach to backend server
+b backend: # attach to backend server
 	echo "attach to backend server"
 
-r repl: start shell
+r repl: # start shell
 	echo "start shell"
 EOF
 	fi
@@ -104,7 +106,8 @@ function cd-to-nearest-file() { local lower='' upper='' title=''
 	done
 }
 
-function main() ( set -euo pipefail; local mf='' at='' arg='' args=() cmd="" rewrite=""
+function main() ( set -euo pipefail
+	local mf='' at='' ws='' arg='' args=() cmd="" rewrite=""
 
 	# Handle various optional actions:
 	[[ " $* " == *' --create-runfile '* || " $* " == *' --overwrite-runfile '* ]] && \
@@ -164,6 +167,10 @@ function main() ( set -euo pipefail; local mf='' at='' arg='' args=() cmd="" rew
 		fi
 	done
 
+ws="[[:space:]]"						# whitespace pattern
+ch="[a-zA-Z0-9_-]"					# character pattern
+wc="[[:space:]a-zA-Z0-9_-]"	# whitespace & character pattern
+
 # ::::::::::::::::::::::::::::::::::::::::::
 # Construct temporary Makefile from Runfile:
 cat <<EOF > "${mf}"
@@ -171,15 +178,15 @@ help: .usage
 
 $(
 	sed -Ee "s!^[[:space:]]*!\t${at}!" \
-			-e "s!^\t${at}([[:space:]a-zA-Z0-9_-]+): (.*)\$!\1: # \2!" \
+			-e "s!^\t${at}(${wc}+${ch})${ws}*:(${wc}+${ch})?${ws}*#${ws}*(.*)\$!\1:\2 # \3!" \
 			-e "s!^\t${at}${rewrite} !\t${at}make --makefile ${mf} !" \
 			-e "s!\t${at}\$!\t!" \
 		Runfile
 )
 
 .usage:
-	@grep -E "^[[:space:]a-zA-Z0-9_-]+: # " \$(MAKEFILE_LIST) \\
-	| sed -Ee 's/^/\\t/' -e 's/: # / · /'
+	@grep -E "^${wc}+:${wc}*# " \$(MAKEFILE_LIST) \\
+	| sed -Ee 's/^/\\t/' -e "s/${ws}*:${wc}*#${ws}*/ · /"
 EOF
 # Done with temporary Makefile construction.
 # ::::::::::::::::::::::::::::::::::::::::::
