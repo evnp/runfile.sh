@@ -6,9 +6,9 @@ e end: # stop app
 	echo "stop app"
 
 t test: # run all tests or specific test [vars: name]
-	[[ -n "$(1)" ]] && echo "run test $(1)" || echo "run test all"
+	[[ -n $(1) ]] && echo "run test $(1)" || echo "run test all"
 
-tests: # run multiple tests [vars: names]
+tests: # run multiple tests [vars: name1, name2, etc.]
 	echo "run tests $(@)"
 
 r repl: # start shell in project environment [vars: env='']

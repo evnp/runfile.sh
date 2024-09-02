@@ -20,7 +20,7 @@ e end: # stop app
 echo "stop app"
 t test: # run all tests or specific test [vars: name]
 [[ -n \$(1) ]] && echo "run test \$(1)" || echo "run test all"
-tests: # run multiple tests [vars: names]
+tests: # run multiple tests [vars: name1, name2, etc.]
 echo "run tests \$(@)"
 r repl: # start shell in project environment [vars: env='']
 echo "start shell in project environment: \$(env)"
@@ -37,7 +37,7 @@ e end: # stop app
 t test: # run all tests or specific test [vars: name]
 	[[ -n \$(1) ]] && echo "run test \$(1)" || echo "run test all"
 
-tests: # run multiple tests [vars: names]
+tests: # run multiple tests [vars: name1, name2, etc.]
 	echo "run tests \$(@)"
 
 r repl: # start shell in project environment [vars: env='']
@@ -105,7 +105,7 @@ function cd-to-nearest-file() { local lower='' upper='' title=''
 }
 
 function main() ( set -euo pipefail
-	local makefile='' buffer='' at='' ws='' rewrite='' cmd=''
+	local makefile='' buffer='' at='' rewrite='' cmd=''
 	local arg='' make_args=() cmd_args=() pos_args=() pos_arg_idx=0
 
 	# Handle various optional actions:
@@ -124,7 +124,6 @@ function main() ( set -euo pipefail
 	# Local values:
 	makefile="$( mktemp )"	# Temporary makefile which we will pass to make.
 	at="@"									# @-prefix causes make to execute commands silently.
-	args=()									# Arguments that will be passed on to invoked run command.
 
 	# Existing Makefile Compatibility:
 	# If 'run cmd' or 'make cmd' appears within another command in a Runfile,
@@ -239,10 +238,10 @@ EOF
 		else
 			if grep -qE '\$\([@0-9]\)' "${makefile}"
 			then
-				echo 'Warning: Your runfile uses positional args $(@) $(1) $(2) etc.'
+				echo "Warning: Your runfile uses positional args \$(@) \$(1) \$(2) etc."
 				echo "which aren't compatible with Make. You'll need to update these"
-				echo 'commands to accept standard Make-style named arguments:'
-				echo '$(abc) in your Makefile, passed to task as: $ make task abc=xyz'
+				echo "commands to accept standard Make-style named arguments:"
+				echo "\$(abc) in your Makefile, passed to task as: $ make task abc=xyz"
 				echo
 			fi
 			print-makefile "${makefile}" > ./Makefile

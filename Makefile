@@ -12,10 +12,10 @@ e end: # stop app
 
 .PHONY: t test
 t test: # run all tests or specific test [vars: name]
-	@[[ -n "$(1)" ]] && echo "run test $(1)" || echo "run test all"
+	@[[ -n $(1) ]] && echo "run test $(1)" || echo "run test all"
 
 .PHONY: tests
-tests: # run multiple tests [vars: names]
+tests: # run multiple tests [vars: name1, name2, etc.]
 	@echo "run tests $(@)"
 
 .PHONY: r repl
