@@ -12,7 +12,7 @@ function create-runfile() {
 
 	if [[ " $* " == *' --compact '* ]]
 	then
-cat <<EOF > Runfile
+cat <<EOF> Runfile
 s start: end # start app
 echo "start app"
 run frontend
@@ -28,7 +28,7 @@ r repl: # start shell in project environment
 echo "start shell environment"
 EOF
 	else
-cat <<EOF > Runfile
+cat <<EOF> Runfile
 s start: end # start app
 	echo "start app"
 	run frontend
@@ -169,7 +169,7 @@ function main() ( set -euo pipefail
 
 # ::::::::::::::::::::::::::::::::::::::::::
 # Construct temporary Makefile from Runfile:
-cat <<EOF > "${mf}"
+cat <<EOF> "${mf}"
 .PHONY: _tasks
 _tasks: .tasks
 
@@ -178,7 +178,7 @@ $(
 		-e "s!^[[:space:]]*!\t${at}!" \
 		-e "s!^\t${at}([a-zA-Z0-9 _-]+):([a-zA-Z0-9 _-]+)?#(.*)\$!.PHONY: \1\n\1:\2#\3!" \
 		-e "s!^\t${at}${rewrite} !\t${at}make --makefile ${mf} !" \
-		-e "s!\t${at}\$!\t!" \
+		-e "s!^\t${at}\$!!" \
 		Runfile
 )
 
