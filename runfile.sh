@@ -190,7 +190,7 @@ EOF
 # Done with temporary Makefile construction.
 # ::::::::::::::::::::::::::::::::::::::::::
 
-	# --create-makefile : Write generated Makefile then exit.
+	# --create-makefile : Write generated Makefile, open in editor (optional) then exit.
 	# --overwrite-makefile : Can be used to overwrite when Makefile already exists.
 	if [[ " $* " == *' --create-makefile '* || " $* " == *' --overwrite-makefile '* ]]
 	then
@@ -204,6 +204,7 @@ EOF
 		else
 			print-makefile "${mf}" > ./Makefile
 			rm "${mf}"
+			edit-file-smartcase makefile --confirm
 			exit 0
 		fi
 	fi
