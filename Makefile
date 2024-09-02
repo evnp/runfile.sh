@@ -11,8 +11,12 @@ e end: # stop app
 	@echo "stop app"
 
 .PHONY: t test
-t test: # run all tests or specific test [vars: name='all']
-	@[[ -n "$(name)" ]] && echo "run test $(name)" || echo "run test all"
+t test: # run all tests or specific test [vars: name]
+	@[[ -n "$(1)" ]] && echo "run test $(1)" || echo "run test all"
+
+.PHONY: tests
+tests: # run multiple tests [vars: names]
+	@echo "run tests $(@)"
 
 .PHONY: r repl
 r repl: # start shell in project environment [vars: env='']
