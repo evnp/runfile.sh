@@ -170,17 +170,20 @@ function main() ( set -euo pipefail
 # ::::::::::::::::::::::::::::::::::::::::::
 # Construct temporary Makefile from Runfile:
 cat <<EOF > "${mf}"
-help: .usage
+.PHONY: _tasks
+_tasks: .tasks
 
 $(
-	sed -Ee "s!^[[:space:]]*!\t${at}!" \
-			-e "s!^\t${at}([a-zA-Z0-9 _-]+):([a-zA-Z0-9 _-]+)?#(.*)\$!\1:\2#\3!" \
-			-e "s!^\t${at}${rewrite} !\t${at}make --makefile ${mf} !" \
-			-e "s!\t${at}\$!\t!" \
+	sed -E \
+		-e "s!^[[:space:]]*!\t${at}!" \
+		-e "s!^\t${at}([a-zA-Z0-9 _-]+):([a-zA-Z0-9 _-]+)?#(.*)\$!.PHONY: \1\n\1:\2#\3!" \
+		-e "s!^\t${at}${rewrite} !\t${at}make --makefile ${mf} !" \
+		-e "s!\t${at}\$!\t!" \
 		Runfile
 )
 
-.usage:
+.PHONY: .tasks
+.tasks:
 	@grep -E "^[a-zA-Z0-9 _-]+:[a-zA-Z0-9 _-]*#" \$(MAKEFILE_LIST) \\
 	| sed -Ee 's/^/\\t/' -e "s/[ ]*:[a-zA-Z0-9 _-]*#[ ]*/ · /"
 EOF
