@@ -167,10 +167,6 @@ function main() ( set -euo pipefail
 		fi
 	done
 
-ws="[[:space:]]"						# whitespace pattern
-ch="[a-zA-Z0-9_-]"					# character pattern
-wc="[[:space:]a-zA-Z0-9_-]"	# whitespace & character pattern
-
 # ::::::::::::::::::::::::::::::::::::::::::
 # Construct temporary Makefile from Runfile:
 cat <<EOF > "${mf}"
@@ -178,15 +174,15 @@ help: .usage
 
 $(
 	sed -Ee "s!^[[:space:]]*!\t${at}!" \
-			-e "s!^\t${at}(${wc}+${ch})${ws}*:(${wc}+${ch})?${ws}*#${ws}*(.*)\$!\1:\2 # \3!" \
+			-e "s!^\t${at}([a-zA-Z0-9 _-]+):([a-zA-Z0-9 _-]+)?#(.*)\$!\1:\2#\3!" \
 			-e "s!^\t${at}${rewrite} !\t${at}make --makefile ${mf} !" \
 			-e "s!\t${at}\$!\t!" \
 		Runfile
 )
 
 .usage:
-	@grep -E "^${wc}+:${wc}*# " \$(MAKEFILE_LIST) \\
-	| sed -Ee 's/^/\\t/' -e "s/${ws}*:${wc}*#${ws}*/ · /"
+	@grep -E "^[a-zA-Z0-9 _-]+:[a-zA-Z0-9 _-]*#" \$(MAKEFILE_LIST) \\
+	| sed -Ee 's/^/\\t/' -e "s/[ ]*:[a-zA-Z0-9 _-]*#[ ]*/ · /"
 EOF
 # Done with temporary Makefile construction.
 # ::::::::::::::::::::::::::::::::::::::::::
