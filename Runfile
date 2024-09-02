@@ -1,15 +1,12 @@
-s start: end#start app
+s start: end # start app
 	echo "start app"
 	run frontend
 
-e end: #stop app
+e end: # stop app
 	echo "stop app"
 
-f frontend:#open frontend app
-	echo "open frontend app"
+t test: # run all tests or specific test [vars: name='all']
+	[[ -n "$(name)" ]] && echo "run test $(name)" || echo "run test all"
 
-b backend:#attach to backend server
-	echo "attach to backend server"
-
-r repl :# start shell
-	echo "start shell"
+r repl: # start shell in project environment [vars: env='']
+	echo "start shell in project environment: $(env)"

@@ -18,14 +18,10 @@ echo "start app"
 run frontend
 e end: # stop app
 echo "stop app"
-f frontend: # open frontend app
-run start
-echo "open frontend app"
-b backend: # attach to backend server
-run start
-echo "attach to backend server"
-r repl: # start shell in project environment
-echo "start shell environment"
+t test: # run all tests or specific test [vars: name='all']
+[[ -n "\$(name)" ]] && echo "run test \$(name)" || echo "run test all"
+r repl: # start shell in project environment [vars: env='']
+echo "start shell in project environment: \$(env)"
 EOF
 	else
 cat <<EOF> Runfile
@@ -36,14 +32,11 @@ s start: end # start app
 e end: # stop app
 	echo "stop app"
 
-f frontend: # open frontend app
-	echo "open frontend app"
+t test: # run all tests or specific test [vars: name='all']
+	[[ -n "\$(name)" ]] && echo "run test \$(name)" || echo "run test all"
 
-b backend: # attach to backend server
-	echo "attach to backend server"
-
-r repl: # start shell
-	echo "start shell"
+r repl: # start shell in project environment [vars: env='']
+	echo "start shell in project environment: \$(env)"
 EOF
 	fi
 }
@@ -107,7 +100,7 @@ function cd-to-nearest-file() { local lower='' upper='' title=''
 }
 
 function main() ( set -euo pipefail
-	local mf='' at='' ws='' arg='' args=() cmd="" rewrite=""
+	local mf='' at='' ws='' rewrite="" cmd="" arg='' make_args=() cmd_args=()
 
 	# Handle various optional actions:
 	[[ " $* " == *' --create-runfile '* || " $* " == *' --overwrite-runfile '* ]] && \
@@ -161,8 +154,11 @@ function main() ( set -euo pipefail
 			if [[ -z "${cmd}" ]]
 			then
 				cmd="${arg}"
+			elif [[ " ${arg}" == *' -' ]]
+			then
+				make_args+=( "${arg}" )
 			else
-				args+=( "${arg}" )
+				cmd_args+=( "${arg}" )
 			fi
 		fi
 	done
@@ -220,13 +216,13 @@ EOF
 	# Main Path : Invoke make with generated makefile and all other arguments.
 	if [[ " $* " == *' --dry-run-command '* ]]
 	then
-		make --makefile "${mf}" --dry-run "${cmd}"
+		make_args+=( --dry-run "${cmd}" )
 	elif [[ -n "${cmd}" ]]
 	then
-		make --makefile "${mf}" "${cmd}"
-	else
-		make --makefile "${mf}"
+		make_args+=( "${cmd}" )
 	fi
+
+	make --makefile "${mf}" "${make_args[@]}" -- "${cmd_args[@]}"
 
 	# Clean up temporary Makefile and exit with success:
 	rm "${mf}"
