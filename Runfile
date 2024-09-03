@@ -8,7 +8,8 @@ stop: # stop app
 b build: lint # build app for environment [vars: env]
 	[[ -n $(env) ]] && echo "buiding app for $(env)" || echo "error: missing env"
 
-t test: build # run all tests or specific tests [vars: name1, name2, etc.]
+t test: # run all tests or specific tests [vars: name1, name2, etc.]
+	run build env=test
 	[[ -n $(@) ]] && echo "running tests $(@)" || echo "running all tests"
 
 l lint: # lint all files or specific file [vars: file]

@@ -184,7 +184,10 @@ EOF
 		if ! (( ${#cmd_args[@]} ))
 		then
 			# Case where no named arguments were provided: replace $(abc) $(xyz) etc.
-			buffer="$( echo "${buffer}" | sed -E 's!\$\([a-zA-Z_][a-zA-Z0-9_]*\)!``!g' )"
+			# Note: There must be at least one lowercase letter [a-z] in these matches,
+			#				because otherwise we'd replace built in Make vars like $(MAKEFILE_LIST)
+			# 			which we want to leave alone.
+			buffer="$( echo "${buffer}" | sed -E 's!\$\([a-zA-Z0-9_]*[a-z][a-zA-Z0-9_]*\)!``!g' )"
 		fi
 		if ! (( ${#pos_args[@]} ))
 		then
@@ -247,8 +250,12 @@ EOF
 	then
 		make_args+=( "${cmd}" )
 	fi
+	if (( ${#cmd_args[@]} ))
+	then
+		make_args+=( -- "${cmd_args[@]}" )
+	fi
 
-	make --makefile "${makefile}" "${make_args[@]}" -- "${cmd_args[@]}"
+	make --makefile "${makefile}" "${make_args[@]}"
 
 	# Clean up temporary Makefile and exit with success:
 	rm "${makefile}"
