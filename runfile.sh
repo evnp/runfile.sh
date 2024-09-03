@@ -152,13 +152,12 @@ function main() ( set -euo pipefail
 cat <<EOF> "${makefile}"
 .PHONY: _tasks
 _tasks: .tasks
-
 $(
 	sed -E \
 		-e "s!^[[:space:]]*!\t${at}!" \
-		-e "s!^\t${at}([a-zA-Z0-9 _-]+):([a-zA-Z0-9 _-]+)?#(.*)\$!.PHONY: \1\n\1:\2#\3!" \
+		-e "s!^\t${at}([a-zA-Z0-9 _-]+):([a-zA-Z0-9 _-]+)?#(.*)\$!\n.PHONY: \1\n\1:\2#\3!" \
 		-e "s!^\t${at}\$!!" \
-		Runfile
+		Runfile | cat -s
 )
 
 .PHONY: .tasks
