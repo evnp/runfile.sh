@@ -2,7 +2,7 @@
 
 # run :: v0.0.1
 
-function create-runfile() {
+function create-runfile() { local buffer=''
 	if [[ " $* " != *' --overwrite-runfile '* ]] && [[ -e 'Runfile' ]]
 	then
 		echo 'Runfile already exists. To overwrite, use:'
@@ -10,39 +10,30 @@ function create-runfile() {
 		exit 1
 	fi
 
+	buffer="$( cat <<EOF
+s start: stop # start app
+	run build env=dev # tasks can be run directly from other tasks
+	echo "starting app"
+
+stop: # stop app
+	echo "stopping app"
+
+b build: lint # build app for environment [vars: env]
+	[[ -n \$(env) ]] && echo "buiding app for \$(env)" || echo "error: missing env"
+
+t test: build # run all tests or specific tests [vars: name1, name2, etc.]
+	[[ -n \$(@) ]] && echo "running tests \$(@)" || echo "running all tests"
+
+l lint: # lint all files or specific file [vars: file]
+	[[ -n \$(1) ]] && echo "linting file \$(1)" || echo "linting all files"
+EOF
+)"
+
 	if [[ " $* " == *' --compact '* ]]
 	then
-cat <<EOF> Runfile
-s start: end # start app
-echo "start app"
-run frontend
-e end: # stop app
-echo "stop app"
-t test: # run all tests or specific test [vars: name]
-[[ -n \$(1) ]] && echo "run test \$(1)" || echo "run test all"
-tests: # run multiple tests [vars: name1, name2, etc.]
-echo "run tests \$(@)"
-r repl: # start shell in project environment [vars: env='']
-echo "start shell in project environment: \$(env)"
-EOF
+		echo "${buffer}" | sed -e '/^$/d' -e 's/^\t//' > Runfile
 	else
-cat <<EOF> Runfile
-s start: end # start app
-	echo "start app"
-	run frontend
-
-e end: # stop app
-	echo "stop app"
-
-t test: # run all tests or specific test [vars: name]
-	[[ -n \$(1) ]] && echo "run test \$(1)" || echo "run test all"
-
-tests: # run multiple tests [vars: name1, name2, etc.]
-	echo "run tests \$(@)"
-
-r repl: # start shell in project environment [vars: env='']
-	echo "start shell in project environment: \$(env)"
-EOF
+		echo "${buffer}" > Runfile
 	fi
 }
 
@@ -105,7 +96,7 @@ function cd-to-nearest-file() { local lower='' upper='' title=''
 }
 
 function main() ( set -euo pipefail
-	local makefile='' buffer='' at='' rewrite='' cmd=''
+	local makefile='' buffer='' at='' cmd=''
 	local arg='' make_args=() cmd_args=() pos_args=() pos_arg_idx=0
 
 	# Handle various optional actions:
@@ -124,21 +115,6 @@ function main() ( set -euo pipefail
 	# Local values:
 	makefile="$( mktemp )"	# Temporary makefile which we will pass to make.
 	at="@"									# @-prefix causes make to execute commands silently.
-
-	# Existing Makefile Compatibility:
-	# If 'run cmd' or 'make cmd' appears within another command in a Runfile,
-	# normally we'd rewrite these to 'make --makefile ${makefile}' to avoid invoking
-	# runfile.sh recursively. However, if a separate Makefile exists in same directory
-	# as the current Runfile we're executing a command for, we WON'T rewrite 'make cmd'
-	# in this way. In that case, leaving 'make cmd' alone allows the user to reference
-	# a command in the existing Makefile from their runfile.sh command.
-	rewrite="(make|run)"
-	if [[ -e 'Makefile' && ! -d 'Makefile' ]] \
-	|| [[ -e 'makefile' && ! -d 'makefile' ]] \
-	|| [[ -e 'MAKEFILE' && ! -d 'MAKEFILE' ]]
-	then
-		rewrite="run"
-	fi
 
 	# Handle these args which we don't want to pass on to command:
 	# --print-command, --dry-run-command,
@@ -181,7 +157,6 @@ $(
 	sed -E \
 		-e "s!^[[:space:]]*!\t${at}!" \
 		-e "s!^\t${at}([a-zA-Z0-9 _-]+):([a-zA-Z0-9 _-]+)?#(.*)\$!.PHONY: \1\n\1:\2#\3!" \
-		-e "s!^\t${at}${rewrite} !\t${at}make --makefile ${makefile} !" \
 		-e "s!^\t${at}\$!!" \
 		Runfile
 )
@@ -200,15 +175,21 @@ EOF
 		&& [[ " $* " != *' --overwrite-makefile '* ]]
 	then
 		buffer="$( cat "${makefile}" )"
+		# Cases where no named or positional arguments were provided:
+		# Replace $(var) $(@) $(1) $(2) etc. in script with empty backtick expression ``.
+		# This seems odd, but it allows tasks like: [[ -n $(1) ]] && echo "$1"
+		# to work whether or not $1 positional arg was provided. Without it, make will
+		# error out due to the script being interpreted as [[ -n  ]]. With standard
+		# quotes instead of backticks, expressions like echo "$1" will inadvertently
+		# print the quotes.
+		if ! (( ${#cmd_args[@]} ))
+		then
+			# Case where no named arguments were provided: replace $(abc) $(xyz) etc.
+			buffer="$( echo "${buffer}" | sed -E 's!\$\([a-zA-Z_][a-zA-Z0-9_]*\)!``!g' )"
+		fi
 		if ! (( ${#pos_args[@]} ))
 		then
-			# Case where no positional args were provided:
-			# Replace $(@) and $(1) $(2) etc. in script with empty backtick expression (``).
-			# This seems odd, but it allows tasks like: [[ -n $(1) ]] && echo "$1"
-			# to work whether or not $1 positional arg was provided. Without it, make will
-			# error out due to the script being interpreted as [[ -n  ]]. With standard
-			# quotes instead of backticks, expressions like echo "$1" will inadvertently
-			# print the quotes.
+			# Case where no positional arguments were provided: replace $(@) $(1) $(2) etc.
 			buffer="${buffer//\$([0-9@])/\`\`}"
 		else
 			# Replace $(@) in script with concatenation of all positional args:

@@ -2,25 +2,25 @@
 _tasks: .tasks
 
 .PHONY: s start
-s start: end # start app
-	@echo "start app"
-	@make frontend
+s start: stop # start app
+	@run build env=dev # tasks can be run directly from other tasks
+	@echo "starting app"
 
-.PHONY: e end
-e end: # stop app
-	@echo "stop app"
+.PHONY: stop
+stop: # stop app
+	@echo "stopping app"
+
+.PHONY: b build
+b build: lint # build app for environment [vars: env]
+	@[[ -n $(env) ]] && echo "buiding app for $(env)" || echo "error: missing env"
 
 .PHONY: t test
-t test: # run all tests or specific test [vars: name]
-	@[[ -n $(1) ]] && echo "run test $(1)" || echo "run test all"
+t test: build # run all tests or specific tests [vars: name]
+	@[[ -n $(name) ]] && echo "running test $(name)" || echo "running all tests"
 
-.PHONY: tests
-tests: # run multiple tests [vars: name1, name2, etc.]
-	@echo "run tests $(@)"
-
-.PHONY: r repl
-r repl: # start shell in project environment [vars: env='']
-	@echo "start shell in project environment: $(env)"
+.PHONY: l lint
+l lint: # lint all files or specific file [vars: file]
+	@[[ -n $(file) ]] && echo "linting file $(file)" || echo "linting all files"
 
 .PHONY: .tasks
 .tasks:

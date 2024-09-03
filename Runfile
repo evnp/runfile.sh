@@ -1,15 +1,15 @@
-s start: end # start app
-	echo "start app"
-	run frontend
+s start: stop # start app
+	run build env=dev # tasks can be run directly from other tasks
+	echo "starting app"
 
-e end: # stop app
-	echo "stop app"
+stop: # stop app
+	echo "stopping app"
 
-t test: # run all tests or specific test [vars: name]
-	[[ -n $(1) ]] && echo "run test $(1)" || echo "run test all"
+b build: lint # build app for environment [vars: env]
+	[[ -n $(env) ]] && echo "buiding app for $(env)" || echo "error: missing env"
 
-tests: # run multiple tests [vars: name1, name2, etc.]
-	echo "run tests $(@)"
+t test: build # run all tests or specific tests [vars: name1, name2, etc.]
+	[[ -n $(@) ]] && echo "running tests $(@)" || echo "running all tests"
 
-r repl: # start shell in project environment [vars: env='']
-	echo "start shell in project environment: $(env)"
+l lint: # lint all files or specific file [vars: file]
+	[[ -n $(1) ]] && echo "linting file $(1)" || echo "linting all files"
