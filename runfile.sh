@@ -2,6 +2,14 @@
 
 # run :: v0.0.1
 
+function compact-file() {
+	sed -e '/^$/d' -e 's/^[[:space:]]//'
+}
+
+function optionally-compact-file() {
+	[[ " $* " == *' --compact '* ]] && compact-file || cat
+}
+
 function create-runfile() { local buffer=''
 	if [[ " $* " != *' --overwrite-runfile '* ]] && [[ -e 'Runfile' ]]
 	then
@@ -10,7 +18,7 @@ function create-runfile() { local buffer=''
 		exit 1
 	fi
 
-	buffer="$( cat <<EOF
+optionally-compact-file "$@" <<EOF > Runfile
 s start: stop # start app
 	run build env=dev # tasks can be run directly from other tasks
 	echo "starting app"
@@ -21,20 +29,13 @@ stop: # stop app
 b build: lint # build app for environment [vars: env]
 	[[ -n \$(env) ]] && echo "buiding app for \$(env)" || echo "error: missing env"
 
-t test: build # run all tests or specific tests [vars: name1, name2, etc.]
+t test: # run all tests or specific tests [vars: name1, name2, etc.]
+	run build env=test
 	[[ -n \$(@) ]] && echo "running tests \$(@)" || echo "running all tests"
 
 l lint: # lint all files or specific file [vars: file]
 	[[ -n \$(1) ]] && echo "linting file \$(1)" || echo "linting all files"
 EOF
-)"
-
-	if [[ " $* " == *' --compact '* ]]
-	then
-		echo "${buffer}" | sed -e '/^$/d' -e 's/^\t//' > Runfile
-	else
-		echo "${buffer}" > Runfile
-	fi
 }
 
 function lowercase-file() {
@@ -67,7 +68,7 @@ function edit-file-smartcase() { local name=''
 }
 
 function print-file-smartcase() {
-	cat "$( smartcase-file "$1" )"
+	cat "$( smartcase-file "$1" )" | optionally-compact-file "$@"
 }
 
 function print-makefile() {
@@ -103,7 +104,7 @@ function main() ( set -euo pipefail
 	[[ " $* " == *' --create-runfile '* || " $* " == *' --overwrite-runfile '* ]] && \
 		create-runfile "$@" && edit-file-smartcase runfile --confirm "$@" && exit 0
 	[[ " $* " == *' --print-runfile '* ]] && \
-		cd-to-nearest-file runfile && print-file-smartcase runfile && exit 0
+		cd-to-nearest-file runfile && print-file-smartcase runfile "$@" && exit 0
 	[[ " $* " == *' --edit-runfile '* ]] && \
 		cd-to-nearest-file runfile && edit-file-smartcase runfile "$@" && exit 0
 	[[ " $* " == *' --edit-makefile '* ]] && \
