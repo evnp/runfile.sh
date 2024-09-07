@@ -169,41 +169,38 @@ EOF
 # Done with temporary Makefile construction.
 # ::::::::::::::::::::::::::::::::::::::::::
 
-	# Handle positional command arguments if any were provided:
+	# Runfile command argument handling:
 	if [[ " $* " != *' --print-makefile '* ]] \
 		&& [[ " $* " != *' --create-makefile '* ]] \
 		&& [[ " $* " != *' --overwrite-makefile '* ]]
+		# If outputting makefile, skip this section.
 	then
-		buffer="$( cat "${makefile}" )"
-		# Cases where no named or positional arguments were provided:
-		# Replace $(var) $(@) $(1) $(2) etc. in script with empty backtick expression ``.
-		# This seems odd, but it allows tasks like: [[ -n $(1) ]] && echo "$1"
-		# to work whether or not $1 positional arg was provided. Without it, make will
-		# error out due to the script being interpreted as [[ -n  ]]. With standard
-		# quotes instead of backticks, expressions like echo "$1" will inadvertently
-		# print the quotes.
-		if ! (( ${#cmd_args[@]} ))
-		then
-			# Case where no named arguments were provided: replace $(abc) $(xyz) etc.
-			# Note: There must be at least one lowercase letter [a-z] in these matches,
-			#				because otherwise we'd replace built in Make vars like $(MAKEFILE_LIST)
-			# 			which we want to leave alone.
-			buffer="$( echo "${buffer}" | sed -E 's!\$\([a-zA-Z0-9_]*[a-z][a-zA-Z0-9_]*\)!``!g' )"
-		fi
-		if ! (( ${#pos_args[@]} ))
-		then
-			# Case where no positional arguments were provided: replace $(@) $(1) $(2) etc.
-			buffer="${buffer//\$([0-9@])/\`\`}"
-		else
-			# Replace $(@) in script with concatenation of all positional args:
-			buffer="${buffer//\$(@)/${pos_args[*]}}"
-			# Replace $(1) $(2) etc. in script with each individual positional arg:
-			for arg in "${pos_args[@]}"
-			do
-				(( pos_arg_idx++ )) || true
-				buffer="${buffer//\$(${pos_arg_idx})/${arg}}"
-			done
-		fi
+		buffer="$(
+			sed -E 's!(\$\((@|[0-9]+|[a-zA-Z][a-zA-Z0-9_]*)\))!\`printf '"'%s' '\1'"'\`!g' \
+				"${makefile}"
+		)"
+		# Wrap all Runfile argument patterns in printf, eg. $(@) -> `printf '%s' '$(@)'`
+		# This resolves issues with Make arg-handling behavior when args are omitted.
+		# For example: [[ -n $(arg) ]] && echo "${arg}"
+		# This will error if $(arg) is not specified, because Make executes: [[ -n  ]]
+		# With printf-wrapping: [[ -n `printf '%s' '$(arg)'` ]] && echo "${arg}"
+		# Now if $(arg) is not specified, Make executes: [[ -n `printf '%s' ''` ]]
+		# which is perfectly valid. We can't simply wrap args in quotes, because then
+		# the quotes would be included when args are interpolated within strings. eg.
+		# "hello: $(world)" -> "hello: '$(world)'" -> "hello: ''" (unwanted quotes)
+
+		# Replace $(@) in script with concatenation of all positional args:
+		buffer="${buffer//\$(@)/${pos_args[*]}}"
+		# Note: Perform this replacement even if no positional args were provided,
+		# because otherwise default Make behavior interpolates ${cmd} in place of $(@).
+
+		# Replace $(1) $(2) etc. in script with each individual positional arg:
+		for arg in "${pos_args[@]}"
+		do
+			(( pos_arg_idx++ )) || true
+			buffer="${buffer//\$(${pos_arg_idx})/${arg}}"
+		done
+
 		# Write buffer back to temporary makefile:
 		echo "${buffer}" > "${makefile}"
 	fi
