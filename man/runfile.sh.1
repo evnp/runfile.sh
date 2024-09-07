@@ -4,8 +4,59 @@
 .SH DESCRIPTION
 .br
 Basic usage:
-.P
-🚧 Under construction 🚧
+.RS 2
+.nf
+$ run \-\-runfile\-help
+
+· runfile\.sh · v0\.0\.1 ·
+
+· a language\-agnostic project task runner · the missing companion of the classic Make ·
+· use a Runfile on its own to manage project tasks · start · build · test · etc ·
+· or use a Runfile alongside a Makefile to keep tasks and build steps separate ·
+
+· Usage · run ····················· Print all available tasks\.
+          run [options] [task] ···· Run a task\.
+          run [options] [action] ·· Run a Runfile/Makefile action\.
+                                  · Task is ignored if action is specified\.
+  # \./Runfile syntax:
+  taskabc: # task description
+    shell command for task abc
+  taskxyz: taskabc # task description · taskxyz runs taskabc first just like Make would
+    shell command for task xyz
+
+^ Whitespace doesn't matter; tabs, spaces, blank lines are all ok, or may be omitted\.
+
+· Actions ·
+
+\-\-runfile\-help \-\-runfile\-usage ·· Print this usage documentation then exit\.
+\-\-runfile\-version ··············· Print current runfile\.sh version then exit\.
+
+\-\-runfile ··· Print contents of nearest Runfile \.
+\-\-makefile ·· Print contents of Makefile which will be generated from nearest Runfile\.
+
+\-\-runfile\-edit ··· Open nearest Runfile with $EDITOR \.
+\-\-makefile\-edit ·· Open nearest Makefile with $EDITOR \.
+
+\-\-runfile\-create  \-\-runfile\-write ··· Write template Runfile in current dir\.
+\-\-makefile\-create \-\-makefile\-write ·· Write generated Makefile in current dir\.
+
+\-\-runfile\-overwrite ··· Overwrite existing Runfile with template Runfile\.
+\-\-makefile\-overwrite ·· Overwrite existing Makefile with generated Makefile\.
+
+· Options ·
+
+\-\-runfile\-compact ···· Use "compact" formatting for Runfile when creating or printing\.
+\-\-runfile\-confirm ···· Always ask for confirmation before opening files with $EDITOR\.
+\-\-runfile\-noconfirm ·· Never ask for confirmation before opening files with $EDITOR\.
+\-\-runfile\-noedit ····· Never open files with $EDITOR\.
+\-\-runfile\-verbose ···· Print code line\-by\-line to terminal during task execution\.
+
+\-\-make\-dry\-run ·· Don't execute task code, just print line\-by\-line to terminal instead\.
+\-\-make\-* ········ Pass any argument directly to they underlying Make command
+                · by prefixing the intended Make argument with "\-\-make\-"\.
+                · For example, \-\-make\-dry\-run will pass \-\-dry\-run to Make\.
+.fi
+.RE
 .SH Install
 .P
 Homebrew:

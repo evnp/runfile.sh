@@ -10,18 +10,67 @@ Minimalist project task runner built on the ubiquitous Make.
 
 **Contents** - [Usage](https://github.com/evnp/runfile.sh#usage) | [Install](https://github.com/evnp/runfile.sh#install) | [Tests](https://github.com/evnp/runfile.sh#tests) | [License](https://github.com/evnp/runfile.sh#license)
 
-If you'd like to jump straight to installing runfile.sh, please go to the [Install](https://github.com/evnp/runfile.sh#install) section or try one of these:
+If you'd like to jump straight in, try one of these or go to the [Install](https://github.com/evnp/runfile.sh#install) section for more (curl, install man page, etc.):
 ```sh
 brew tap evnp/runfile.sh && brew install runfile.sh
-# OR
+```
+```sh
 npm install -g runfile.sh
-# OR to curl directly, see https://github.com/evnp/runfile.sh#install
 ```
 
 Usage
 -----
+```sh
+$ run --runfile-help
 
-🚧 Under construction 🚧
+· runfile.sh · v0.0.1 ·
+
+· a language-agnostic project task runner · the missing companion of the classic Make ·
+· use a Runfile on its own to manage project tasks · start · build · test · etc ·
+· or use a Runfile alongside a Makefile to keep tasks and build steps separate ·
+
+· Usage · run ····················· Print all available tasks.
+          run [options] [task] ···· Run a task.
+          run [options] [action] ·· Run a Runfile/Makefile action.
+                                  · Task is ignored if action is specified.
+  # ./Runfile syntax:
+  taskabc: # task description
+    shell command(s) for task abc
+  taskxyz: taskabc # task description · taskxyz runs taskabc first just like Make would
+    shell command(s) for task xyz
+
+^ Whitespace doesn't matter; tabs, spaces, blank lines are all ok, or may be omitted.
+
+· Actions ·
+
+--runfile-help --runfile-usage ·· Print this usage documentation then exit.
+--runfile-version ··············· Print current runfile.sh version then exit.
+
+--runfile ··· Print contents of nearest Runfile (in current dir or dir above).
+--makefile ·· Print contents of Makefile which will be generated from nearest Runfile.
+
+--runfile-edit ··· Open nearest Runfile with $EDITOR (in current dir or dir above).
+--makefile-edit ·· Open nearest Makefile with $EDITOR (in current dir or dir above).
+
+--runfile-create  --runfile-write ··· Write template Runfile in current dir.
+--makefile-create --makefile-write ·· Write generated Makefile in current dir.
+
+--runfile-overwrite ··· Overwrite existing Runfile with template Runfile.
+--makefile-overwrite ·· Overwrite existing Makefile with generated Makefile.
+
+· Options ·
+
+--runfile-compact ···· Use "compact" formatting for Runfile when creating or printing.
+--runfile-confirm ···· Always ask for confirmation before opening files with $EDITOR.
+--runfile-noconfirm ·· Never ask for confirmation before opening files with $EDITOR.
+--runfile-noedit ····· Never open files with $EDITOR.
+--runfile-verbose ···· Print code line-by-line to terminal during task execution.
+
+--make-dry-run ·· Don't execute task code, just print line-by-line to terminal instead.
+--make-* ········ Pass any argument directly to they underlying Make command
+                · by prefixing the intended Make argument with "--make-".
+                · For example, --make-dry-run will pass --dry-run to Make.
+```
 
 Install
 -------
@@ -34,7 +83,7 @@ NPM:
 ```sh
 npm install -g runfile.sh
 ```
-curl:
+Curl:
 ```sh
 read -rp $'\n'"Current \$PATH:"$'\n'"${PATH//:/ : }"$'\n\n'"Enter a directory from the list above: " \
   && curl -L -o "${REPLY/\~/$HOME}/runfile.sh" https://github.com/evnp/runfile.sh/raw/main/runfile.sh \
