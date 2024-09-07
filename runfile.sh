@@ -1,17 +1,66 @@
 #!/usr/bin/env bash
 
-# run :: v0.0.1
+# runfile.sh · v0.0.1
 
-function compact-file() {
-	sed -e '/^$/d' -e 's/^[[:space:]]//'
+function version() {
+	head -n 3 < "$0" | tail -1 | cut -c3-
 }
 
-function optionally-compact-file() {
-	[[ " $* " == *' --compact '* ]] && compact-file || cat
+function usage() {
+cat <<EOF
+
+· $( version ) ·
+
+· a language-agnostic project task runner · the missing companion of the classic Make ·
+· use a Runfile on its own to manage project tasks · start · build · test · etc ·
+· or use a Runfile alongside a Makefile to keep tasks and build steps separate ·
+
+· Usage · run ····················· Print all available tasks.
+          run [options] [task] ···· Run a task.
+          run [options] [action] ·· Run a Runfile/Makefile action.
+                                  · Task is ignored if action is specified.
+  # ./Runfile syntax:
+  taskabc: # task description
+    shell command(s) for task abc
+  taskxyz: taskabc # task description · taskxyz runs taskabc first just like Make would
+    shell command(s) for task xyz
+
+^ Whitespace doesn't matter; tabs, spaces, blank lines are all ok, or may be omitted.
+
+· Actions ·
+
+--runfile-help --runfile-usage ·· Print this usage documentation then exit.
+--runfile-version ··············· Print current runfile.sh version then exit.
+
+--runfile ··· Print contents of nearest Runfile (in current dir or dir above).
+--makefile ·· Print contents of Makefile which will be generated from nearest Runfile.
+
+--runfile-edit ··· Open nearest Runfile with \$EDITOR (in current dir or dir above).
+--makefile-edit ·· Open nearest Makefile with \$EDITOR (in current dir or dir above).
+
+--runfile-create  --runfile-write ··· Write template Runfile in current dir.
+--makefile-create --makefile-write ·· Write generated Makefile in current dir.
+
+--runfile-overwrite ··· Overwrite existing Runfile with template Runfile.
+--makefile-overwrite ·· Overwrite existing Makefile with generated Makefile.
+
+· Options ·
+
+--runfile-compact ···· Use "compact" formatting for Runfile when creating or printing.
+--runfile-confirm ···· Always ask for confirmation before opening files with \$EDITOR.
+--runfile-noconfirm ·· Never ask for confirmation before opening files with \$EDITOR.
+--runfile-noedit ····· Never open files with \$EDITOR.
+--runfile-verbose ···· Print code line-by-line to terminal during task execution.
+
+--make-dry-run ·· Don't execute task code, just print line-by-line to terminal instead.
+--make-* ········ Pass any argument directly to they underlying Make command
+                · by prefixing the intended Make argument with "--make-".
+                · For example, --make-dry-run will pass --dry-run to Make.
+EOF
 }
 
 function create-runfile() { local buffer=''
-	if [[ " $* " != *' --overwrite-runfile '* ]] && [[ -e 'Runfile' ]]
+	if [[ " $* " != *' --runfile-overwrite '* ]] && [[ -e 'Runfile' ]]
 	then
 		echo 'Runfile already exists. To overwrite, use:'
 		echo 'run --overwrite-runfile'
@@ -20,22 +69,30 @@ function create-runfile() { local buffer=''
 
 optionally-compact-file "$@" <<EOF > Runfile
 s start: stop # start app
-	run build env=dev # tasks can be run directly from other tasks
-	echo "starting app"
+  run build env=dev # tasks can be run directly from other tasks
+  echo "starting app"
 
 stop: # stop app
-	echo "stopping app"
+  echo "stopping app"
 
 b build: lint # build app for environment [vars: env]
-	[[ -n \$(env) ]] && echo "buiding app for \$(env)" || echo "error: missing env"
+  [[ -n \$(env) ]] && echo "buiding app for \$(env)" || echo "error: missing env"
 
 t test: # run all tests or specific tests [vars: name1, name2, etc.]
-	run build env=test
-	[[ -n \$(@) ]] && echo "running tests \$(@)" || echo "running all tests"
+  run build env=test
+  [[ -n \$(@) ]] && echo "running tests \$(@)" || echo "running all tests"
 
 l lint: # lint all files or specific file [vars: file]
-	[[ -n \$(1) ]] && echo "linting file \$(1)" || echo "linting all files"
+  [[ -n \$(1) ]] && echo "linting file \$(1)" || echo "linting all files"
 EOF
+}
+
+function compact-file() {
+	sed -e '/^$/d' -e 's/^[[:space:]]//'
+}
+
+function optionally-compact-file() {
+	[[ " $* " == *' --runfile-compact '* ]] && compact-file || cat
 }
 
 function lowercase-file() {
@@ -59,9 +116,10 @@ function smartcase-file() { local name=''
 
 function edit-file-smartcase() { local name=''
 	name="$( smartcase-file "$1" )"
-	if [[ " $* " != *' --noedit '* ]]
+	if [[ " $* " != *' --runfile-noedit '* ]]
 	then
-		[[ " $* " == *' --confirm '* && " $* " != *' --noconfirm '* ]] && \
+		[[ " $* " == *' --runfile-confirm '* ]] && \
+		[[ " $* " != *' --runfile-noconfirm '* ]] && \
 			read -rsn1 -p "Press any key to edit ${name} with $EDITOR · CTRL+C to exit"
 		$EDITOR "${name}"
 	fi
@@ -87,7 +145,7 @@ function cd-to-nearest-file() { local lower='' upper='' title=''
 			cd ..
 		else
 			echo "No ${title} found. To create one here, use:"
-			echo "run --create-${lower}"
+			echo "run --${lower}-create"
 			# Note: This message pertains to the user's shell which _won't_ have
 			# changed directory, because this script's main function uses a subshell.
 			# So there's no need to change directory back to where we started here.
@@ -97,54 +155,64 @@ function cd-to-nearest-file() { local lower='' upper='' title=''
 }
 
 function main() ( set -euo pipefail
-	local makefile='' buffer='' at='' cmd=''
-	local arg='' make_args=() cmd_args=() pos_args=() pos_arg_idx=0
+	local makefile='' buffer='' at='' task=''
+	local arg='' make_args=() named_args=() pos_args=() pos_arg_idx=0
 
-	# Handle various optional actions:
-	[[ " $* " == *' --create-runfile '* || " $* " == *' --overwrite-runfile '* ]] && \
-		create-runfile "$@" && edit-file-smartcase runfile --confirm "$@" && exit 0
-	[[ " $* " == *' --print-runfile '* ]] && \
-		cd-to-nearest-file runfile && print-file-smartcase runfile "$@" && exit 0
-	[[ " $* " == *' --edit-runfile '* ]] && \
+	# --runfile-help, --runfile-usage | Print usage documentation then exit.
+	# --runfile-version               | Print current runfile.sh version then exit.
+	[[ " $* " == *' --runfile-help '* ]] || \
+	[[ " $* " == *' --runfile-usage '* ]] && usage && exit 0
+	[[ " $* " == *' --runfile-version '* ]] && version | cut -dv -f2 && exit 0
+
+	# --runfile-create    | Write template Runfile, then open in editor (optional).
+	# --runfile-write     | Alias for --runfile-create.
+	# --runfile-overwrite | Can be used to overwrite when Runfile already exists.
+	[[ " $* " == *' --runfile-create '* ]] || \
+	[[ " $* " == *' --runfile-write '* ]] || \
+	[[ " $* " == *' --runfile-overwrite '* ]] && \
+		create-runfile "$@" && edit-file-smartcase runfile --runfile-confirm "$@" && exit 0
+
+	# --runfile-edit  | Edit current Runfile, or exit with error if not found.
+	# --makefile-edit | Edit current Makefile, or exit with error if not found.
+	[[ " $* " == *' --runfile-edit '* ]] && \
 		cd-to-nearest-file runfile && edit-file-smartcase runfile "$@" && exit 0
-	[[ " $* " == *' --edit-makefile '* ]] && \
+	[[ " $* " == *' --makefile-edit '* ]] && \
 		cd-to-nearest-file makefile && edit-file-smartcase makefile "$@" && exit 0
 
-	# If no runfile in current dir, navigate up looking for one until we reach $HOME:
+	# --runfile | Print current Runfile, or exit with error if not found.
+	[[ " $* " == *' --runfile '* ]] && \
+		cd-to-nearest-file runfile && print-file-smartcase runfile "$@" && exit 0
+
+	# If no Runfile in current dir, navigate up looking for one until we reach $HOME:
 	cd-to-nearest-file runfile
 
-	# Local values:
-	makefile="$( mktemp )"	# Temporary makefile which we will pass to make.
-	at="@"									# @-prefix causes make to execute commands silently.
+	# Temporary Makefile which we will pass to make:
+	makefile="$( mktemp )"
 
-	# Handle these args which we don't want to pass on to command:
-	# --print-command, --dry-run-command,
-	# --overwrite-runfile, --overwrite-makefile,
-	# --create-runfile, --create-makefile,
-	# --print-runfile, --print-makefile,
-	# --edit-runfile, --edit-makefile,
+	# @-prefix causes Make to execute tasks silently (without printing task code):
+	at="@"
+	[[ " $* " == *' --runfile-verbose '* || " $* " == *' --make-dry-run '* ]] && \
+		at="" # Remove @-prefix so that Make prints task code before executing tasks.
+
+	# Separate arguments into categories:
+	# make_args  : Arguments that will be passed on to Make.
+	# named_args : name=value arguments interpolated into $(name) within task code.
+	# pos_args   : Arguments interpolated into $(1) $(2) $(3) etc. within task code.
+	#            : All positional args will be interpoated into $(@), space-separated.
 	for arg in "$@"
 	do
-		if [[ "${arg}" == '--print-command' || "${arg}" == '--dry-run-command' ]]
+		if [[ "${arg}" == '--make-'* ]]
 		then
-			at="" # Remove @-prefix so that make prints commands before executing them.
-		elif ! [[ "${arg}" == '--overwrite-runfile' || "${arg}" == '--overwrite-makefile' ]] \
-			&& ! [[ "${arg}" == '--create-runfile' || "${arg}" == '--create-makefile' ]] \
-			&& ! [[ "${arg}" == '--print-runfile' || "${arg}" == '--print-makefile' ]] \
-			&& ! [[ "${arg}" == '--edit-runfile' || "${arg}" == '--edit-makefile' ]]
+			make_args+=( "${arg/make-}" )
+		elif [[ "${arg}" =~ ^[a-zA-Z0-9_-]+\= ]]
 		then
-			if [[ -z "${cmd}" ]]
-			then
-				cmd="${arg}"
-			elif [[ " ${arg}" == *' -' ]]
-			then
-				make_args+=( "${arg}" )
-			elif [[ "${arg}" =~ ^[a-zA-Z0-9_-]+\= ]]
-			then
-				cmd_args+=( "${arg}" )
-			else
-				pos_args+=( "${arg}" )
-			fi
+			named_args+=( "${arg}" )
+		elif [[ -z "${task}" ]]
+		then
+			task="${arg}"
+		elif [[ "${arg}" != '--runfile-'* ]]
+		then
+			pos_args+=( "${arg}" )
 		fi
 	done
 
@@ -169,11 +237,12 @@ EOF
 # Done with temporary Makefile construction.
 # ::::::::::::::::::::::::::::::::::::::::::
 
-	# Runfile command argument handling:
-	if [[ " $* " != *' --print-makefile '* ]] \
-		&& [[ " $* " != *' --create-makefile '* ]] \
-		&& [[ " $* " != *' --overwrite-makefile '* ]]
-		# If outputting makefile, skip this section.
+	# Process interpolated args within generated Makefile: $(arg) $(@) $(1) $(2) etc.
+	if [[ " $* " != *' --makefile '* ]] && \
+		[[ " $* " != *' --makefile-create '* ]] && \
+		[[ " $* " != *' --makefile-write '* ]] && \
+		[[ " $* " != *' --makefile-overwrite '* ]]
+		# If outputting Makefile, skip this section.
 	then
 		buffer="$(
 			sed -E 's!(\$\((@|[0-9]+|[a-zA-Z][a-zA-Z0-9_]*)\))!\`printf '"'%s' '\1'"'\`!g' \
@@ -192,7 +261,7 @@ EOF
 		# Replace $(@) in script with concatenation of all positional args:
 		buffer="${buffer//\$(@)/${pos_args[*]}}"
 		# Note: Perform this replacement even if no positional args were provided,
-		# because otherwise default Make behavior interpolates ${cmd} in place of $(@).
+		# because otherwise default Make behavior interpolates ${task} in place of $(@).
 
 		# Replace $(1) $(2) etc. in script with each individual positional arg:
 		for arg in "${pos_args[@]}"
@@ -205,15 +274,18 @@ EOF
 		echo "${buffer}" > "${makefile}"
 	fi
 
-	# --create-makefile : Write generated Makefile, open in editor (optional) then exit.
-	# --overwrite-makefile : Can be used to overwrite when Makefile already exists.
-	if [[ " $* " == *' --create-makefile '* || " $* " == *' --overwrite-makefile '* ]]
+	# --makefile-create    | Write generated Makefile, then open in editor (optional).
+	# --makefile-write     | Alias for --makefile-create.
+	# --makefile-overwrite | Can be used to overwrite when Makefile already exists.
+	if [[ " $* " == *' --makefile-create '* ]] || \
+		[[ " $* " == *' --makefile-write '* ]] || \
+		[[ " $* " == *' --makefile-overwrite '* ]]
 	then
-		if [[ " $* " != *' --overwrite-makefile '* ]] \
+		if [[ " $* " != *' --makefile-overwrite '* ]] \
 		&& [[ -e 'Makefile' && ! -d 'Makefile' ]]
 		then
 			echo 'Makefile already exists. To overwrite, use:'
-			echo 'make --overwrite-makefile'
+			echo 'make --makefile-overwrite'
 			rm "${makefile}"
 			exit 1
 		else
@@ -227,35 +299,33 @@ EOF
 			fi
 			print-makefile "${makefile}" > ./Makefile
 			rm "${makefile}"
-			edit-file-smartcase makefile --confirm
+			edit-file-smartcase makefile --runfile-confirm
 			exit 0
 		fi
 	fi
 
-	# --print-makefile : Print generated Makefile then exit.
-	if [[ " $* " == *' --print-makefile '* ]]
+	# --makefile | Print generated Makefile then exit:
+	if [[ " $* " == *' --makefile '* ]]
 	then
 		print-makefile "${makefile}"
 		rm "${makefile}"
 		exit 0
 	fi
 
-	# Main Path : Invoke make with generated makefile and all other arguments.
-	if [[ " $* " == *' --dry-run-command '* ]]
+	# Main Path | Prepare arguments to be passed to Make:
+	if [[ -n "${task}" ]]
 	then
-		make_args+=( --dry-run "${cmd}" )
-	elif [[ -n "${cmd}" ]]
-	then
-		make_args+=( "${cmd}" )
+		make_args+=( "${task}" )
 	fi
-	if (( ${#cmd_args[@]} ))
+	if (( ${#named_args[@]} ))
 	then
-		make_args+=( -- "${cmd_args[@]}" )
+		make_args+=( -- "${named_args[@]}" )
 	fi
 
+	# Main Path | Invoke Make with generated Makefile and prepared arguments:
 	make --makefile "${makefile}" "${make_args[@]}"
 
-	# Clean up temporary Makefile and exit with success:
+	# Main Path | Clean up temporary Makefile and exit with success:
 	rm "${makefile}"
 	exit 0
 )
