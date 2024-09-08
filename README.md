@@ -10,7 +10,7 @@ runfile.sh
 [![shellcheck](https://github.com/evnp/runfile.sh/workflows/shellcheck/badge.svg)](https://github.com/evnp/runfile.sh/actions)
 [![latest release](https://img.shields.io/github/release/evnp/runfile.sh.svg)](https://github.com/evnp/runfile.sh/releases/latest)
 [![npm package](https://img.shields.io/npm/v/runfile.sh.svg)](https://www.npmjs.com/package/runfile.sh)
-[![license](https://img.shields.io/github/license/evnp/runfile.sh.svg?color=blue)](https://github.com/evnp/runfile.sh/blob/master/LICENSE.md)
+[![license](https://img.shields.io/badge/license-MIT-blue)](https://github.com/evnp/runfile.sh/blob/master/LICENSE.md)
 
 **Contents** - [Usage](https://github.com/evnp/runfile.sh#usage) | [Install](https://github.com/evnp/runfile.sh#install) | [Tests](https://github.com/evnp/runfile.sh#tests) | [License](https://github.com/evnp/runfile.sh#license)
 
