@@ -92,7 +92,12 @@ function compact-file() {
 }
 
 function optionally-compact-file() {
-	[[ " $* " == *' --runfile-compact '* ]] && compact-file || cat
+	if [[ " $* " == *' --runfile-compact '* ]]
+	then
+		compact-file
+	else
+		cat
+	fi
 }
 
 function lowercase-file() {
@@ -126,7 +131,7 @@ function edit-file-smartcase() { local name=''
 }
 
 function print-file-smartcase() {
-	cat "$( smartcase-file "$1" )" | optionally-compact-file "$@"
+	optionally-compact-file "$@" < "$( smartcase-file "$1" )"
 }
 
 function print-makefile() {
