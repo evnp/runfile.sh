@@ -207,12 +207,15 @@ function main() ( set -euo pipefail
 		elif [[ "${arg}" =~ ^[a-zA-Z0-9_-]+\= ]]
 		then
 			named_args+=( "${arg}" )
-		elif [[ -z "${task}" ]]
-		then
-			task="${arg}"
 		elif [[ "${arg}" != '--runfile-'* ]]
 		then
-			pos_args+=( "${arg}" )
+			if [[ -z "${task}" ]]
+			then
+				task="${arg}"
+			elif [[ "${arg}" != '--runfile-'* ]]
+			then
+				pos_args+=( "${arg}" )
+			fi
 		fi
 	done
 
