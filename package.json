@@ -1,7 +1,7 @@
 {
   "name": "runfile.sh",
   "version": "0.0.1",
-  "description": "Minimalist project task runner built on the ubiquitous Make.",
+  "description": "Language-agnostic project task runner built on the ubiquitous Make.",
   "main": "runfile.sh",
   "files": [
     "/runfile.sh",
