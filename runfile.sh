@@ -11,9 +11,9 @@ cat <<EOF
 
 · $( version ) ·
 
-· language-agnostic project task runner · missing companion of the ubiquitous Make ·
-· use a Runfile on its own to manage project tasks · start, build, test, lint, etc ·
-· use Runfile & Makefile in tandem to keep project tasks and build steps organized ·
+· Language-agnostic project task runner · Missing companion of the ubiquitous Make ·
+· Use a Runfile on its own to manage project tasks · start, build, test, lint, etc ·
+· Use Runfile & Makefile in tandem to keep project tasks and build steps organized ·
 
 · Usage · run ····················· Print all available tasks.
           run [options] [task] ···· Run a task.
