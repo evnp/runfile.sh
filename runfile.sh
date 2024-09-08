@@ -11,9 +11,9 @@ cat <<EOF
 
 · $( version ) ·
 
-· a language-agnostic project task runner · the missing companion of the classic Make ·
-· use a Runfile on its own to manage project tasks · start · build · test · etc ·
-· or use a Runfile alongside a Makefile to keep tasks and build steps separate ·
+· language-agnostic project task runner · missing companion of the ubiquitous Make ·
+· use a Runfile on its own to manage project tasks · start, build, test, lint, etc ·
+· use Runfile & Makefile in tandem to keep project tasks and build steps organized ·
 
 · Usage · run ····················· Print all available tasks.
           run [options] [task] ···· Run a task.
@@ -25,7 +25,7 @@ cat <<EOF
   taskxyz: taskabc # task description · taskxyz runs taskabc first just like Make would
     shell command(s) for task xyz
 
-^ Whitespace doesn't matter; tabs, spaces, blank lines are all ok, or may be omitted.
+  ^ Whitespace doesn't matter; tabs, spaces, blank lines are all ok, or may be omitted.
 
 · Actions ·
 

@@ -1,6 +1,10 @@
 runfile.sh
 ----------
-Minimalist project task runner built on the ubiquitous Make.
+```
+· language-agnostic project task runner · missing companion of the ubiquitous Make ·
+· use a Runfile on its own to manage project tasks · start, build, test, lint, etc ·
+· use Runfile & Makefile in tandem to keep project tasks and build steps organized ·
+```
 
 [![tests](https://github.com/evnp/runfile.sh/workflows/tests/badge.svg)](https://github.com/evnp/runfile.sh/actions)
 [![shellcheck](https://github.com/evnp/runfile.sh/workflows/shellcheck/badge.svg)](https://github.com/evnp/runfile.sh/actions)
@@ -25,10 +29,6 @@ $ run --runfile-help
 
 · runfile.sh · v0.0.1 ·
 
-· a language-agnostic project task runner · the missing companion of the classic Make ·
-· use a Runfile on its own to manage project tasks · start · build · test · etc ·
-· or use a Runfile alongside a Makefile to keep tasks and build steps separate ·
-
 · Usage · run ····················· Print all available tasks.
           run [options] [task] ···· Run a task.
           run [options] [action] ·· Run a Runfile/Makefile action.
@@ -39,7 +39,7 @@ $ run --runfile-help
   taskxyz: taskabc # task description · taskxyz runs taskabc first just like Make would
     shell command(s) for task xyz
 
-^ Whitespace doesn't matter; tabs, spaces, blank lines are all ok, or may be omitted.
+  ^ Whitespace doesn't matter; tabs, spaces, blank lines are all ok, or may be omitted.
 
 · Actions ·
 
@@ -120,28 +120,3 @@ npm install
 npm run testw
 ```
 Non-OSX: replace `brew install fswatch` with package manager of choice (see [fswatch docs](https://github.com/emcrisostomo/fswatch#getting-fswatch))
-
-License
--------
-MIT License
-
-Copyright (c) 2024 Evan Campbell Purcer
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
