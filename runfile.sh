@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# runfile.sh · v0.0.1
+# runfile.sh · v0.0.2
 
 function version() {
 	head -n 3 < "$0" | tail -1 | cut -c3-

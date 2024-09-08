@@ -27,8 +27,6 @@ Usage
 ```sh
 $ run --runfile-help
 
-· runfile.sh · v0.0.1 ·
-
 · Usage · run ····················· Print all available tasks.
           run [options] [task] ···· Run a task.
           run [options] [action] ·· Run a Runfile/Makefile action.
