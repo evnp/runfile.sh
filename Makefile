@@ -15,12 +15,13 @@ b build: lint # build app for environment [vars: env]
 	@[[ -n $(env) ]] && echo "buiding app for $(env)" || echo "error: missing env"
 
 .PHONY: t test
-t test: build # run all tests or specific tests [vars: name]
-	@[[ -n $(name) ]] && echo "running test $(name)" || echo "running all tests"
+t test: # run all tests or specific tests [vars: name1, name2, etc.]
+	@run build env=test
+	@[[ -n $(@) ]] && echo "running tests $(@)" || echo "running all tests"
 
 .PHONY: l lint
 l lint: # lint all files or specific file [vars: file]
-	@[[ -n $(file) ]] && echo "linting file $(file)" || echo "linting all files"
+	@[[ -n $(1) ]] && echo "linting file $(1)" || echo "linting all files"
 
 .PHONY: .tasks
 .tasks:

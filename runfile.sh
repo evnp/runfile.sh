@@ -185,7 +185,8 @@ function main() ( set -euo pipefail
 		cd-to-nearest-file makefile && edit-file-smartcase makefile "$@" && exit 0
 
 	# --runfile | Print current Runfile, or exit with error if not found.
-	[[ " $* " == *' --runfile '* ]] && \
+	[[ " $* " == *' --runfile '* ]] || \
+	[[ "$*" == '--runfile-compact' ]] && \
 		cd-to-nearest-file runfile && print-file-smartcase runfile "$@" && exit 0
 
 	# If no Runfile in current dir, navigate up looking for one until we reach $HOME:
