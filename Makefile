@@ -25,5 +25,5 @@ l lint: # lint all files or specific file [vars: file]
 
 .PHONY: .tasks
 .tasks:
-	@grep -E "^[a-zA-Z0-9 _-]+:[a-zA-Z0-9 _-]*#" $(MAKEFILE_LIST) \
-	| sed -Ee 's/^/\t/' -e "s/[ ]*:[a-zA-Z0-9 _-]*#[ ]*/ · /"
+	@grep -E "^([a-zA-Z0-9 _-]+:[a-zA-Z0-9 _-]*#)" $(MAKEFILE_LIST) \
+	| sed -Ee "s/^/\t/" -e "s/[ ]*:[a-zA-Z0-9 _-]*#[ ]*/ · /"

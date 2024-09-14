@@ -184,6 +184,7 @@ function cd-to-nearest-file() { local lower='' upper='' title=''
 function main() ( set -euo pipefail
 	local makefile='' buffer='' at='' task=''
 	local arg='' make_args=() named_args=() pos_args=() pos_arg_idx=0
+	local verbose_pattern_1='' verbose_pattern_2=''
 
 	# --runfile-help, --runfile-usage · Print usage documentation then exit.
 	# --runfile-version               · Print current runfile.sh version then exit.
@@ -254,6 +255,14 @@ function main() ( set -euo pipefail
 		fi
 	done
 
+	# If --runfile-verbose specified, use modified patterns for Makefile .tasks list,
+	# so that when eah task is printed, its commands are printed line-by-line underneath:
+	if [[ " $* " == *' --runfile-verbose '* ]]
+	then
+		verbose_pattern_1='\\s+|'
+		verbose_pattern_2='s/^([^[:space:]])/\\n\\1/g'
+	fi
+
 # ::::::::::::::::::::::::::::::::::::::::::
 # Construct temporary Makefile from Runfile:
 cat <<EOF> "${makefile}"
@@ -269,8 +278,8 @@ $(
 
 .PHONY: .tasks
 .tasks:
-	@grep -E "^[a-zA-Z0-9 _-]+:[a-zA-Z0-9 _-]*#" \$(MAKEFILE_LIST) \\
-	| sed -Ee 's/^/\\t/' -e "s/[ ]*:[a-zA-Z0-9 _-]*#[ ]*/ · /"
+	@grep -E "^(${verbose_pattern_1}[a-zA-Z0-9 _-]+:[a-zA-Z0-9 _-]*#)" \$(MAKEFILE_LIST) \\
+	| sed -Ee "${verbose_pattern_2:-s/^/\\t/}" -e "s/[ ]*:[a-zA-Z0-9 _-]*#[ ]*/ · /"
 EOF
 # Done with temporary Makefile construction.
 # ::::::::::::::::::::::::::::::::::::::::::
