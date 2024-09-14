@@ -8,23 +8,16 @@ Basic usage:
 .nf
 $ run \-\-runfile\-help
 
-· runfile\.sh · v0\.0\.1 ·
-
-· a language\-agnostic project task runner · missing companion of the ubiquitous Make ·
-· use a Runfile on its own to manage project tasks · start · build · test · etc ·
-· or use a Runfile alongside a Makefile to keep tasks and build steps separate ·
-
-· Usage · run ····················· Print all available tasks\.
-          run [options] [task] ···· Run a task\.
+· Usage · run ····················· Print list of all available tasks\.
+          run [options] [task] ···· Run a task \.
           run [options] [action] ·· Run a Runfile/Makefile action\.
-                                  · Task is ignored if action is specified\.
-  # \./Runfile syntax:
-  taskabc: # task description
-    shell command for task abc
-  taskxyz: taskabc # task description · taskxyz runs taskabc first just like Make would
-    shell command for task xyz
 
-^ Whitespace doesn't matter; tabs, spaces, blank lines are all ok, or may be omitted\.
+# \./Runfile syntax  
+taskabc: # task description
+  shell command for task abc
+taskxyz: taskabc # task description, taskxyz runs taskabc first just like Make would
+  shell command for task xyz
+#^ whitespace doesn't matter; tabs, spaces, blank lines are all ok, or may be omitted
 
 · Actions ·
 
@@ -50,6 +43,7 @@ $ run \-\-runfile\-help
 \-\-runfile\-noconfirm ·· Never ask for confirmation before opening files with $EDITOR\.
 \-\-runfile\-noedit ····· Never open files with $EDITOR\.
 \-\-runfile\-verbose ···· Print code line\-by\-line to terminal during task execution\.
+\-\-makefile\-compat ···· Disable all features not compatible with Make\.
 
 \-\-make\-dry\-run ·· Don't execute task code, just print line\-by\-line to terminal instead\.
 \-\-make\-* ········ Pass any argument directly to they underlying Make command
@@ -76,9 +70,7 @@ npm install \-g runfile\.sh
 Curl:
 .RS 2
 .nf
-read \-rp $'\\n'"Current \\$PATH:"$'\\n'"${PATH//:/ : }"$'\\n\\n'"Enter a directory from the list above: " \\
-  && curl \-L \-o "${REPLY/\\~/$HOME}/runfile\.sh" https://github\.com/evnp/runfile\.sh/raw/main/runfile\.sh \\
-  && chmod +x "${REPLY/\\~/$HOME}/runfile\.sh"
+read \-rp $'\\n'"Current directories in \\$PATH:"$'\\n'"$(echo $PATH|sed 's/:/\\n/g'|sort)"$'\\n\\n'"Enter a directory from the list above: " && [[ \-z "${REPLY}" ]] && echo "Cancelled " || ( curl \-L \-o "${REPLY/\\~/$HOME}/runfile\.sh" https://github\.com/evnp/runfile\.sh/raw/main/runfile\.sh && chmod +x "${REPLY/\\~/$HOME}/runfile\.sh" )
 .fi
 .RE
 .P
@@ -87,8 +79,7 @@ runfile\.sh has no external dependencies, but it's good practice to audit code b
 If you also want to install runfile\.sh's man page:
 .RS 2
 .nf
-read \-rp $'\\n'"Current \\$MANPATH:"$'\\n'"${MANPATH//:/ : }"$'\\n\\n'"Enter a directory from the list above: " \\
-  && curl \-L \-o "${REPLY/\\~/$HOME}/man1/runfile\.sh\.1" https://github\.com/evnp/runfile\.sh/raw/main/man/runfile\.sh\.1
+read \-rp $'\\n'"Current directories in \\$:"$'\\n'"$(manpath|sed 's/:/\\n/g'|sort)"$'\\n\\n'"Enter a directory from the list above: " && [[ \-z "${REPLY}" ]] && echo "Cancelled " || curl \-L \-o "${REPLY/\\~/$HOME}/man1/runfile\.sh\.1" https://github\.com/evnp/runfile\.sh/raw/main/man/runfile\.sh\.1
 .fi
 .RE
 .P

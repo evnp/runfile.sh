@@ -15,17 +15,16 @@ cat <<EOF
 · Use a Runfile on its own to manage project tasks · start, build, test, lint, etc ·
 · Use Runfile & Makefile in tandem to keep project tasks and build steps organized ·
 
-· Usage · run ····················· Print all available tasks.
-          run [options] [task] ···· Run a task.
+· Usage · run ····················· Print list of all available tasks.
+          run [options] [task] ···· Run a task (ignored if action is specified).
           run [options] [action] ·· Run a Runfile/Makefile action.
-                                  · Task is ignored if action is specified.
-  # ./Runfile syntax:
-  taskabc: # task description
-    shell command(s) for task abc
-  taskxyz: taskabc # task description · taskxyz runs taskabc first just like Make would
-    shell command(s) for task xyz
 
-  ^ Whitespace doesn't matter; tabs, spaces, blank lines are all ok, or may be omitted.
+# ./Runfile syntax  (this is a comment!)
+taskabc: # task description
+  shell command(s) for task abc
+taskxyz: taskabc # task description, taskxyz runs taskabc first just like Make would
+  shell command(s) for task xyz
+#^ whitespace doesn't matter; tabs, spaces, blank lines are all ok, or may be omitted
 
 · Actions ·
 
@@ -51,6 +50,7 @@ cat <<EOF
 --runfile-noconfirm ·· Never ask for confirmation before opening files with \$EDITOR.
 --runfile-noedit ····· Never open files with \$EDITOR.
 --runfile-verbose ···· Print code line-by-line to terminal during task execution.
+--makefile-compat ···· Disable all features not compatible with Make.
 
 --make-dry-run ·· Don't execute task code, just print line-by-line to terminal instead.
 --make-* ········ Pass any argument directly to they underlying Make command
@@ -59,7 +59,7 @@ cat <<EOF
 EOF
 }
 
-function create-runfile() { local buffer=''
+function create-runfile() {
 	if [[ " $* " != *' --runfile-overwrite '* ]] && [[ -e 'Runfile' ]]
 	then
 		echo 'Runfile already exists. To overwrite, use:'
@@ -67,6 +67,8 @@ function create-runfile() { local buffer=''
 		exit 1
 	fi
 
+	if [[ " $* " != *' --makefile-compat '* ]]
+	then
 optionally-compact-file "$@" <<EOF > Runfile
 s start: stop # start app
   run build env=dev # tasks can be run directly from other tasks
@@ -85,6 +87,26 @@ t test: # run all tests or specific tests [vars: name1, name2, etc.]
 l lint: # lint all files or specific file [vars: file]
   [[ -n \$(1) ]] && echo "linting file \$(1)" || echo "linting all files"
 EOF
+	else
+optionally-compact-file "$@" <<EOF > Runfile
+s start: stop # start app
+	run build env=dev # tasks can be run directly from other tasks
+	echo "starting app"
+
+stop: # stop app
+	echo "stopping app"
+
+b build: lint # build app for environment [vars: env]
+	[[ -n "\$(env)" ]] && echo "buiding app for \$(env)" || echo "error: missing env"
+
+t test: # run all tests or specific test [vars: name]
+	run build env=test
+	[[ -n "\$(name)" ]] && echo "running tests \$(name)" || echo "running all tests"
+
+l lint: # lint all files or specific file [vars: file]
+	[[ -n "\$(file)" ]] && echo "linting file \$(file)" || echo "linting all files"
+EOF
+	fi
 }
 
 function compact-file() {
@@ -163,28 +185,28 @@ function main() ( set -euo pipefail
 	local makefile='' buffer='' at='' task=''
 	local arg='' make_args=() named_args=() pos_args=() pos_arg_idx=0
 
-	# --runfile-help, --runfile-usage | Print usage documentation then exit.
-	# --runfile-version               | Print current runfile.sh version then exit.
+	# --runfile-help, --runfile-usage · Print usage documentation then exit.
+	# --runfile-version               · Print current runfile.sh version then exit.
 	[[ " $* " == *' --runfile-help '* ]] || \
 	[[ " $* " == *' --runfile-usage '* ]] && usage && exit 0
 	[[ " $* " == *' --runfile-version '* ]] && version | cut -dv -f2 && exit 0
 
-	# --runfile-create    | Write template Runfile, then open in editor (optional).
-	# --runfile-write     | Alias for --runfile-create.
-	# --runfile-overwrite | Can be used to overwrite when Runfile already exists.
+	# --runfile-create    · Write template Runfile, then open in editor (optional).
+	# --runfile-write     · Alias for --runfile-create.
+	# --runfile-overwrite · Can be used to overwrite when Runfile already exists.
 	[[ " $* " == *' --runfile-create '* ]] || \
 	[[ " $* " == *' --runfile-write '* ]] || \
 	[[ " $* " == *' --runfile-overwrite '* ]] && \
 		create-runfile "$@" && edit-file-smartcase runfile --runfile-confirm "$@" && exit 0
 
-	# --runfile-edit  | Edit current Runfile, or exit with error if not found.
-	# --makefile-edit | Edit current Makefile, or exit with error if not found.
+	# --runfile-edit  · Edit current Runfile, or exit with error if not found.
+	# --makefile-edit · Edit current Makefile, or exit with error if not found.
 	[[ " $* " == *' --runfile-edit '* ]] && \
 		cd-to-nearest-file runfile && edit-file-smartcase runfile "$@" && exit 0
 	[[ " $* " == *' --makefile-edit '* ]] && \
 		cd-to-nearest-file makefile && edit-file-smartcase makefile "$@" && exit 0
 
-	# --runfile | Print current Runfile, or exit with error if not found.
+	# --runfile · Print current Runfile, or exit with error if not found.
 	[[ " $* " == *' --runfile '* ]] || \
 	[[ "$*" == '--runfile-compact' ]] && \
 		cd-to-nearest-file runfile && print-file-smartcase runfile "$@" && exit 0
@@ -201,10 +223,10 @@ function main() ( set -euo pipefail
 		at="" # Remove @-prefix so that Make prints task code before executing tasks.
 
 	# Separate arguments into categories:
-	# make_args  : Arguments that will be passed on to Make.
-	# named_args : name=value arguments interpolated into $(name) within task code.
-	# pos_args   : Arguments interpolated into $(1) $(2) $(3) etc. within task code.
-	#            : All positional args will be interpoated into $(@), space-separated.
+	# make_args  · Arguments that will be passed on to Make.
+	# named_args · name=value arguments interpolated into $(name) within task code.
+	# pos_args   · Arguments interpolated into $(1) $(2) $(3) etc. within task code.
+	#            · All positional args will be interpoated into $(@), space-separated.
 	for arg in "$@"
 	do
 		if [[ "${arg}" == '--make-'* ]]
@@ -213,13 +235,20 @@ function main() ( set -euo pipefail
 		elif [[ "${arg}" =~ ^[a-zA-Z0-9_-]+\= ]]
 		then
 			named_args+=( "${arg}" )
-		elif [[ "${arg}" != '--runfile-'* ]]
+		elif [[ "${arg}" != '--runfile-'* && "${arg}" != '--makefile-'* ]]
 		then
 			if [[ -z "${task}" ]]
 			then
 				task="${arg}"
-			elif [[ "${arg}" != '--runfile-'* ]]
-			then
+			else
+				if [[ " $* " == *' --makefile-compat '* ]]
+				then
+					echo "Warning · Task '${task}' was run in Make-compatibility mode while being"
+					echo "        · passed positional argument '${arg}' incompatible with Make."
+					echo "        · Use a named argument instead ('run ${task} argname=${arg}') where"
+					echo "        · argname corresponds with '\$(argname)' in '${task}' in Runfile."
+					echo
+				fi
 				pos_args+=( "${arg}" )
 			fi
 		fi
@@ -247,7 +276,9 @@ EOF
 # ::::::::::::::::::::::::::::::::::::::::::
 
 	# Process interpolated args within generated Makefile: $(arg) $(@) $(1) $(2) etc.
-	if [[ " $* " != *' --makefile '* ]] && \
+	if [[ " $* " != *' --makefile-compat '* ]] && \
+		# If running in Make compatibility mode, skip this section.
+		[[ " $* " != *' --makefile '* ]] && \
 		[[ " $* " != *' --makefile-create '* ]] && \
 		[[ " $* " != *' --makefile-write '* ]] && \
 		[[ " $* " != *' --makefile-overwrite '* ]]
@@ -283,9 +314,9 @@ EOF
 		echo "${buffer}" > "${makefile}"
 	fi
 
-	# --makefile-create    | Write generated Makefile, then open in editor (optional).
-	# --makefile-write     | Alias for --makefile-create.
-	# --makefile-overwrite | Can be used to overwrite when Makefile already exists.
+	# --makefile-create    · Write generated Makefile, then open in editor (optional).
+	# --makefile-write     · Alias for --makefile-create.
+	# --makefile-overwrite · Can be used to overwrite when Makefile already exists.
 	if [[ " $* " == *' --makefile-create '* ]] || \
 		[[ " $* " == *' --makefile-write '* ]] || \
 		[[ " $* " == *' --makefile-overwrite '* ]]
@@ -300,10 +331,10 @@ EOF
 		else
 			if grep -qE '\$\([@0-9]\)' "${makefile}"
 			then
-				echo "Warning: Your runfile uses positional args \$(@) \$(1) \$(2) etc."
-				echo "which aren't compatible with Make. You'll need to update these"
-				echo "commands to accept standard Make-style named arguments:"
-				echo "\$(abc) in your Makefile, passed to task as: $ make task abc=xyz"
+				echo "Warning · Your runfile uses positional args \$(@) \$(1) \$(2) etc."
+				echo "        · which aren't compatible with Make. You should update these"
+				echo "        · commands to accept standard Make-style named arguments:"
+				echo "        · \$(abc) in your Makefile, passed as: $ make task abc=xyz"
 				echo
 			fi
 			print-makefile "${makefile}" > ./Makefile
@@ -313,7 +344,7 @@ EOF
 		fi
 	fi
 
-	# --makefile | Print generated Makefile then exit:
+	# --makefile · Print generated Makefile then exit:
 	if [[ " $* " == *' --makefile '* ]]
 	then
 		print-makefile "${makefile}"
@@ -321,7 +352,7 @@ EOF
 		exit 0
 	fi
 
-	# Main Path | Prepare arguments to be passed to Make:
+	# Main Path · Prepare arguments to be passed to Make:
 	if [[ -n "${task}" ]]
 	then
 		make_args+=( "${task}" )
@@ -331,10 +362,10 @@ EOF
 		make_args+=( -- "${named_args[@]}" )
 	fi
 
-	# Main Path | Invoke Make with generated Makefile and prepared arguments:
+	# Main Path · Invoke Make with generated Makefile and prepared arguments:
 	make --makefile "${makefile}" "${make_args[@]}"
 
-	# Main Path | Clean up temporary Makefile and exit with success:
+	# Main Path · Clean up temporary Makefile and exit with success:
 	rm "${makefile}"
 	exit 0
 )

@@ -27,17 +27,16 @@ Usage
 ```sh
 $ run --runfile-help
 
-· Usage · run ····················· Print all available tasks.
-          run [options] [task] ···· Run a task.
+· Usage · run ····················· Print list of all available tasks.
+          run [options] [task] ···· Run a task (ignored if action is specified).
           run [options] [action] ·· Run a Runfile/Makefile action.
-                                  · Task is ignored if action is specified.
-  # ./Runfile syntax:
-  taskabc: # task description
-    shell command(s) for task abc
-  taskxyz: taskabc # task description · taskxyz runs taskabc first just like Make would
-    shell command(s) for task xyz
 
-  ^ Whitespace doesn't matter; tabs, spaces, blank lines are all ok, or may be omitted.
+# ./Runfile syntax  (this is a comment!)
+taskabc: # task description
+  shell command(s) for task abc
+taskxyz: taskabc # task description, taskxyz runs taskabc first just like Make would
+  shell command(s) for task xyz
+#^ whitespace doesn't matter; tabs, spaces, blank lines are all ok, or may be omitted
 
 · Actions ·
 
@@ -63,6 +62,7 @@ $ run --runfile-help
 --runfile-noconfirm ·· Never ask for confirmation before opening files with $EDITOR.
 --runfile-noedit ····· Never open files with $EDITOR.
 --runfile-verbose ···· Print code line-by-line to terminal during task execution.
+--makefile-compat ···· Disable all features not compatible with Make.
 
 --make-dry-run ·· Don't execute task code, just print line-by-line to terminal instead.
 --make-* ········ Pass any argument directly to they underlying Make command
