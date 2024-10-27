@@ -28,8 +28,8 @@ taskxyz: taskabc # task description, taskxyz runs taskabc first just like Make w
 
 · Actions ·
 
---runfile-help --runfile-usage ·· Print this usage documentation then exit.
---runfile-version ··············· Print current runfile.sh version then exit.
+-h --help --usage ·· Print this usage documentation then exit.
+-v --version ······· Print current runfile.sh version then exit.
 
 --runfile ··· Print contents of nearest Runfile (in current dir or dir above).
 --makefile ·· Print contents of Makefile which will be generated from nearest Runfile.
@@ -186,11 +186,12 @@ function main() ( set -euo pipefail
 	local arg='' make_args=() named_args=() pos_args=() pos_arg_idx=0
 	local verbose_pattern_1='' verbose_pattern_2=''
 
-	# --runfile-help, --runfile-usage · Print usage documentation then exit.
-	# --runfile-version               · Print current runfile.sh version then exit.
-	[[ " $* " == *' --runfile-help '* ]] || \
-	[[ " $* " == *' --runfile-usage '* ]] && usage && exit 0
-	[[ " $* " == *' --runfile-version '* ]] && version | cut -dv -f2 && exit 0
+	# -h, --help, --usage · Print usage documentation then exit.
+	# -v, --version       · Print current runfile.sh version then exit.
+	# NOTE: Only handle these args if they are the ONLY args.
+	# It should be possible to define runfile commands with their own -h, --help, etc.
+	[[ "$*" == '-h' || "$*" == '--help' || "$*" == '--usage' ]] && usage && exit 0
+	[[ "$*" == '-v' || "$*" == '--version' ]] && version | cut -dv -f2 && exit 0
 
 	# --runfile-create    · Write template Runfile, then open in editor (optional).
 	# --runfile-write     · Alias for --runfile-create.

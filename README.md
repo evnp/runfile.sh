@@ -12,7 +12,7 @@ runfile.sh
 [![npm package](https://img.shields.io/npm/v/runfile.sh.svg)](https://www.npmjs.com/package/runfile.sh)
 [![license](https://img.shields.io/badge/license-MIT-blue)](https://github.com/evnp/runfile.sh/blob/master/LICENSE.md)
 
-**Contents** - [Usage](https://github.com/evnp/runfile.sh#usage) | [Install](https://github.com/evnp/runfile.sh#install) | [Tests](https://github.com/evnp/runfile.sh#tests) | [License](https://github.com/evnp/runfile.sh#license)
+**Contents** - [What?](https://github.com/evnp/runfile.sh#what) | [Usage](https://github.com/evnp/runfile.sh#usage) | [Install](https://github.com/evnp/runfile.sh#install) | [Tests](https://github.com/evnp/runfile.sh#tests) | [License](https://github.com/evnp/runfile.sh#license)
 
 If you'd like to jump straight in, try one of these or go to the [Install](https://github.com/evnp/runfile.sh#install) section for more (curl, install man page, etc.):
 ```sh
@@ -21,6 +21,14 @@ brew tap evnp/runfile.sh && brew install runfile.sh
 ```sh
 npm install -g runfile.sh
 ```
+
+What is a Runfile?
+------------------
+A `Runfile` is like a `Makefile`, but simpler. Runfiles and Makefiles can live together within a project in harmony.
+
+Where a Makefile might be used to codify steps which build various artefacts relevant to a project, a Runfile could be used to encode various tasks a person would often want to carry out when interacting with that project. For example: running tests, linting source code, installing dependencies, generating documentation, preparing a release. These tasks can be implemented within a Makefile, but using a Runfile make the process much simpler – Make is a powerful tool with file-change tracking and dependency-graph awareness, among many other things that aren't usually relevant to running simple tasks.
+
+Runfiles can be thought of as filling a similar role to these other excellent projects: just, TODO
 
 Usage
 -----
@@ -40,8 +48,8 @@ taskxyz: taskabc # task description, taskxyz runs taskabc first just like Make w
 
 · Actions ·
 
---runfile-help --runfile-usage ·· Print this usage documentation then exit.
---runfile-version ··············· Print current runfile.sh version then exit.
+-h --help --usage ·· Print this usage documentation then exit.
+-v --version ······· Print current runfile.sh version then exit.
 
 --runfile ··· Print contents of nearest Runfile (in current dir or dir above).
 --makefile ·· Print contents of Makefile which will be generated from nearest Runfile.

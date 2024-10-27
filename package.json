@@ -8,7 +8,7 @@
     "/man"
   ],
   "man": [
-    "./man/runfile.sh.1"
+    "./man/runfile.1"
   ],
   "scripts": {
     "lint": "shellcheck runfile.sh",
@@ -33,7 +33,7 @@
     "s": "npm run -s simulate"
   },
   "bin": {
-    "runfile.sh": "runfile.sh"
+    "run": "runfile.sh"
   },
   "repository": {
     "type": "git",

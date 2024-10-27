@@ -33,13 +33,39 @@ EOF
 	assert_success
 }
 
-@test "${BATS_TEST_NUMBER} run --runfile-version" {
+@test "${BATS_TEST_NUMBER} run -v" {
 	execute_test_command
 	assert_output --regexp "^[0-9]+\.[0-9]+\.[0-9]$"
 	assert_success
 }
 
-@test "${BATS_TEST_NUMBER} run --runfile-help" {
+@test "${BATS_TEST_NUMBER} run --version" {
+	execute_test_command
+	assert_output --regexp "^[0-9]+\.[0-9]+\.[0-9]$"
+	assert_success
+}
+
+@test "${BATS_TEST_NUMBER} run -h" {
+	execute_test_command
+	assert_output -p "runfile.sh"
+	assert_output --regexp "[0-9]+\.[0-9]+\.[0-9]"
+	assert_output -p "Usage"
+	assert_output -p "Actions"
+	assert_output -p "Options"
+	assert_success
+}
+
+@test "${BATS_TEST_NUMBER} run --help" {
+	execute_test_command
+	assert_output -p "runfile.sh"
+	assert_output --regexp "[0-9]+\.[0-9]+\.[0-9]"
+	assert_output -p "Usage"
+	assert_output -p "Actions"
+	assert_output -p "Options"
+	assert_success
+}
+
+@test "${BATS_TEST_NUMBER} run --usage" {
 	execute_test_command
 	assert_output -p "runfile.sh"
 	assert_output --regexp "[0-9]+\.[0-9]+\.[0-9]"
