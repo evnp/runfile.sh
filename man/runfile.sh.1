@@ -1,4 +1,4 @@
-.TH "RUNFILE\.SH" "1" "September 2024"
+.TH "RUNFILE\.SH" "1" "October 2024"
 .SH "NAME"
 \fBrunfile.sh – “tmux-execute” – a lightweight tmux command & layout composer\fR
 .SH DESCRIPTION
@@ -21,18 +21,14 @@ taskxyz: taskabc # task description, taskxyz runs taskabc first just like Make w
 
 · Actions ·
 
-\-\-runfile\-help \-\-runfile\-usage ·· Print this usage documentation then exit\.
-\-\-runfile\-version ··············· Print current runfile\.sh version then exit\.
-
-\-\-runfile ··· Print contents of nearest Runfile \.
-\-\-makefile ·· Print contents of Makefile which will be generated from nearest Runfile\.
-
-\-\-runfile\-edit ··· Open nearest Runfile with $EDITOR \.
-\-\-makefile\-edit ·· Open nearest Makefile with $EDITOR \.
-
-\-\-runfile\-create  \-\-runfile\-write ··· Write template Runfile in current dir\.
-\-\-makefile\-create \-\-makefile\-write ·· Write generated Makefile in current dir\.
-
+\-h \-\-help \-\-usage ····· Print this usage documentation then exit\.
+\-v \-\-version ·········· Print current runfile\.sh version then exit\.
+\-\-runfile ············· Print contents of nearest Runfile \.
+\-\-makefile ············ Print contents of Makefile generated from nearest Runfile\.
+\-\-runfile\-edit ········ Open nearest Runfile with \\$EDITOR\.
+\-\-makefile\-edit ······· Open nearest Makefile with \\$EDITOR\.
+\-\-runfile\-create ······ Write template Runfile in current dir\.
+\-\-makefile\-create ····· Write generated Makefile in current dir\.
 \-\-runfile\-overwrite ··· Overwrite existing Runfile with template Runfile\.
 \-\-makefile\-overwrite ·· Overwrite existing Makefile with generated Makefile\.
 

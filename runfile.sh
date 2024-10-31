@@ -28,18 +28,14 @@ taskxyz: taskabc # task description, taskxyz runs taskabc first just like Make w
 
 · Actions ·
 
--h --help --usage ·· Print this usage documentation then exit.
--v --version ······· Print current runfile.sh version then exit.
-
---runfile ··· Print contents of nearest Runfile (in current dir or dir above).
---makefile ·· Print contents of Makefile which will be generated from nearest Runfile.
-
---runfile-edit ··· Open nearest Runfile with \$EDITOR (in current dir or dir above).
---makefile-edit ·· Open nearest Makefile with \$EDITOR (in current dir or dir above).
-
---runfile-create  --runfile-write ··· Write template Runfile in current dir.
---makefile-create --makefile-write ·· Write generated Makefile in current dir.
-
+-h --help --usage ····· Print this usage documentation then exit.
+-v --version ·········· Print current runfile.sh version then exit.
+--runfile ············· Print contents of nearest Runfile (in current dir or dir above).
+--makefile ············ Print contents of Makefile generated from nearest Runfile.
+--runfile-edit ········ Open nearest Runfile with \$EDITOR.
+--makefile-edit ······· Open nearest Makefile with \$EDITOR.
+--runfile-create ······ Write template Runfile in current dir.
+--makefile-create ····· Write generated Makefile in current dir.
 --runfile-overwrite ··· Overwrite existing Runfile with template Runfile.
 --makefile-overwrite ·· Overwrite existing Makefile with generated Makefile.
 
