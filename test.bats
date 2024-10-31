@@ -19,17 +19,17 @@ function execute_test_command() {
 }
 
 task_list="$( cat <<EOF
-	s start · start app
-	stop · stop app
-	b build · build app for environment [vars: env]
-	t test · run all tests or specific tests [vars: name1, name2, etc.]
-	l lint · lint all files or specific file [vars: file]
+  start · start app
+  stop · stop app
+  build · build app for environment [vars: env]
+  test · run all tests or specific tests [vars: name1, name2, etc.]
+  lint · lint all files or specific file [vars: file]
 EOF
 )"
 
 @test "${BATS_TEST_NUMBER} run" {
 	execute_test_command
-	assert_output "${task_list}"
+	assert_output -p "${task_list}"
 	assert_success
 }
 

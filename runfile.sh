@@ -157,6 +157,18 @@ function print-makefile() {
 	sed -E "s!\t${at}make --makefile ${makefile} !\t${at}make !" "$@"
 }
 
+function print-runfile-commands() {
+	# Print current Runfile commands:
+	echo
+	grep -E '[a-zA-Z0-9_-][a-zA-Z0-9 _-]+:[a-zA-Z0-9 _-]*#' "$( smartcase-file runfile )" \
+	| sed -Ee 's/:.*#/ · /g' -e 's/  / /g' -e 's/^/  /g'
+	# Print Runfile command aliases if any are currently available:
+	echo
+	awk 'NR==FNR{a[$0]=1;next}a[$0]' <( bash -ic 'alias' ) <( print-runfile-aliases ) \
+	| sed -e "s/\'/\"/g" -e 's/^/  /g' -e 's/$/\n/g' \
+	| perl -0777 -pe 's/\n\n(.)/\n\1/g'
+}
+
 function print-runfile-aliases() {
 	grep -E '[a-zA-Z0-9_-][a-zA-Z0-9 _-]+:[a-zA-Z0-9 _-]*#' "$( smartcase-file runfile )" \
 	| sed -E 's/.*(^| )([a-zA-Z0-9_-][a-zA-Z0-9_-]+):.*/\2/g' \
@@ -189,6 +201,8 @@ function main() ( set -euo pipefail
 	local makefile='' buffer='' at='' task=''
 	local arg='' make_args=() named_args=() pos_args=() pos_arg_idx=0
 	local verbose_pattern_1='' verbose_pattern_2=''
+
+	[[ "$*" == '' ]] && print-runfile-commands && exit 0
 
 	# -h, --help, --usage · Print usage documentation then exit.
 	# -v, --version       · Print current runfile.sh version then exit.
@@ -288,7 +302,7 @@ $(
 .PHONY: .tasks
 .tasks:
 	@grep -E "^(${verbose_pattern_1}[a-zA-Z0-9 _-]+:[a-zA-Z0-9 _-]*#)" \$(MAKEFILE_LIST) \\
-	| sed -Ee "${verbose_pattern_2:-s/^/\\t/}" -e "s/[ ]*:[a-zA-Z0-9 _-]*#[ ]*/ · /"
+	| sed -Ee "${verbose_pattern_2:-s/^/  /}" -e "s/[ ]*:[a-zA-Z0-9 _-]*#[ ]*/ · /"
 EOF
 # Done with temporary Makefile construction.
 # ::::::::::::::::::::::::::::::::::::::::::
