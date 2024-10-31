@@ -38,6 +38,7 @@ taskxyz: taskabc # task description, taskxyz runs taskabc first just like Make w
 --makefile-create ····· Write generated Makefile in current dir.
 --runfile-overwrite ··· Overwrite existing Runfile with template Runfile.
 --makefile-overwrite ·· Overwrite existing Makefile with generated Makefile.
+--runfile-aliases ····· Print command aliases for nearest Runfile (for shell config).
 
 · Options ·
 
@@ -156,6 +157,13 @@ function print-makefile() {
 	sed -E "s!\t${at}make --makefile ${makefile} !\t${at}make !" "$@"
 }
 
+function print-runfile-aliases() {
+	grep -E '[a-zA-Z0-9_-][a-zA-Z0-9 _-]+:[a-zA-Z0-9 _-]*#' "$( smartcase-file runfile )" \
+	| sed -E 's/.*(^| )([a-zA-Z0-9_-][a-zA-Z0-9_-]+):.*/\2/g' \
+	| awk '!_[substr($1,1,1)]++' `# unique on first char of each command` \
+	| sed -E "s/(.)(.*)/alias ${RUNFILE_ALIASES_PREFIX:-r}\1='run \1\2'/"
+}
+
 function cd-to-nearest-file() { local lower='' upper='' title=''
 	lower="$( lowercase-file "$1" )"
 	upper="$( uppercase-file "$1" )"
@@ -203,6 +211,10 @@ function main() ( set -euo pipefail
 		cd-to-nearest-file runfile && edit-file-smartcase runfile "$@" && exit 0
 	[[ " $* " == *' --makefile-edit '* ]] && \
 		cd-to-nearest-file makefile && edit-file-smartcase makefile "$@" && exit 0
+
+	# --runfile-aliases · Print current Runfile aliases, or exit with error if not found.
+	[[ " $* " == *' --runfile-aliases '* ]] && \
+		cd-to-nearest-file runfile && print-runfile-aliases "$@" && exit 0
 
 	# --runfile · Print current Runfile, or exit with error if not found.
 	[[ " $* " == *' --runfile '* ]] || \

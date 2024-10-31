@@ -58,6 +58,7 @@ taskxyz: taskabc # task description, taskxyz runs taskabc first just like Make w
 --makefile-create ····· Write generated Makefile in current dir.
 --runfile-overwrite ··· Overwrite existing Runfile with template Runfile.
 --makefile-overwrite ·· Overwrite existing Makefile with generated Makefile.
+--runfile-aliases ····· Print command aliases for nearest Runfile (for shell config).
 
 · Options ·
 
