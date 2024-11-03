@@ -197,6 +197,163 @@ function cd-to-nearest-file() { local lower='' upper='' title=''
 	done
 }
 
+function wizard() {
+	local state='action1' prev_states=() prev_runfiles=()
+
+	if [[ -e 'Runfile' ]]
+	then
+		while TRUE
+		do
+			read -rsn1 -p ' · Runfile already exists. Overwrite? [y|N] · '
+			if [[ "$REPLY" == 'y' || "$REPLY" == 'Y' ]]
+			then
+				rm Runfile
+				echo
+				break
+			elif [[ "$REPLY" == 'n' || "$REPLY" == 'N' || "$REPLY" == '' ]]
+			then
+				exit 0
+			else
+				echo
+			fi
+		done
+	fi
+
+	read -rsn1 -p " · At each of the following prompts, press ENTER to continue · "
+	echo
+
+	read -rsn1 -p " · At each of the following prompts, type BACK to return to previous step · "
+	echo
+
+	while TRUE
+	do
+		if [[ -f 'Runfile' ]]
+		then
+			echo
+			echo './Runfile'
+			echo '---------'
+			cat Runfile
+			[[ "${state}" == 'description' ]] && echo
+			echo '---------'
+			echo "${prev_states[@]}"
+			echo
+		fi
+
+		if [[ "${state}" == 'action1' || "${state}" == 'action2' ]]
+		then
+			if [[ "${state}" == 'action1' ]]
+			then
+				read -rp " · Enter first run action name, or type DONE ·"$'\n'" ··· "
+			else
+				read -rp " · Enter another run action name, or type DONE ·"$'\n'" ··· "
+			fi
+			if [[ "$REPLY" == 'BACK' ]]
+			then
+				if (( ${#prev_states[@]} )) && (( ${#prev_runfiles[@]} ))
+				then
+					echo "${prev_runfiles[0]}" > Runfile
+					state="${prev_states[0]}"
+					prev_states=( "${prev_states[@]:1}" )
+					prev_runfiles=( "${prev_runfiles[@]:1}" )
+				fi
+			elif [[ "$REPLY" == 'DONE' ]]
+			then
+				break
+			elif ! [[ "$REPLY" =~ ^[a-zA-Z0-9_-]+$ ]]
+			then
+				echo " · Run command names should only have characters a-z A-Z 0-9 _ - and no spaces ·"
+				echo " · Please try again ·"
+				echo
+			else
+				prev_states=( "${state}" "${prev_states[@]}" )
+				if [[ -f 'Runfile' ]]
+				then
+					prev_runfiles=( "$( cat Runfile )" "${prev_runfiles[@]}" )
+				else
+					prev_runfiles=( "" "${prev_runfiles[@]}" )
+				fi
+				echo -n "$REPLY:" >> Runfile
+				state='description'
+			fi
+		elif [[ "${state}" == 'description' ]]
+		then
+			read -rp " · What does this action do? (leave blank to skip) ·"$'\n'" ··· "
+			if [[ "$REPLY" == 'BACK' ]]
+			then
+				echo "PREV_STATES" "${prev_states[@]}"
+				if (( ${#prev_states[@]} )) && (( ${#prev_runfiles[@]} ))
+				then
+					echo -n "${prev_runfiles[0]}" > Runfile
+					state="${prev_states[0]}"
+					prev_states=( "${prev_states[@]:1}" )
+					prev_runfiles=( "${prev_runfiles[@]:1}" )
+				fi
+			else
+				prev_states=( "${state}" "${prev_states[@]}" )
+				prev_runfiles=( "$( cat Runfile )" "${prev_runfiles[@]}" )
+				state='command1'
+				if [[ -n "$REPLY" ]]
+				then
+					echo " # $REPLY" >> Runfile
+				else
+					echo >> Runfile
+				fi
+			fi
+		elif [[ "${state}" == 'command1' ]]
+		then
+			read -rp " · Enter the first shell command that should be run ·"$'\n'" ··· "
+			if [[ "$REPLY" == 'BACK' ]]
+			then
+				if (( ${#prev_states[@]} )) && (( ${#prev_runfiles[@]} ))
+				then
+					echo "${prev_runfiles[0]}" > Runfile
+					state="${prev_states[0]}"
+					prev_states=( "${prev_states[@]:1}" )
+					prev_runfiles=( "${prev_runfiles[@]:1}" )
+				fi
+			elif [[ -n "$REPLY" ]]
+			then
+				prev_states=( "${state}" "${prev_states[@]}" )
+				prev_runfiles=( "$( cat Runfile )" "${prev_runfiles[@]}" )
+				state='command2'
+				echo "  $REPLY" >> Runfile
+			fi
+		elif [[ "${state}" == 'command2' ]]
+		then
+			read -rp " · Enter another shell command that should be run, or type DONE ·"$'\n'" ·· "
+			if [[ "$REPLY" == 'BACK' ]]
+			then
+				if (( ${#prev_states[@]} )) && (( ${#prev_runfiles[@]} ))
+				then
+					echo "${prev_runfiles[0]}" > Runfile
+					state="${prev_states[0]}"
+					prev_states=( "${prev_states[@]:1}" )
+					prev_runfiles=( "${prev_runfiles[@]:1}" )
+				fi
+			elif [[ "$REPLY" == 'DONE' ]]
+			then
+				prev_states=( "${state}" "${prev_states[@]}" )
+				state='action2'
+			else
+				prev_states=( "${state}" "${prev_states[@]}" )
+				prev_runfiles=( "$( cat Runfile )" "${prev_runfiles[@]}" )
+				echo "  $REPLY" >> Runfile
+			fi
+		fi
+	done
+
+	if [[ -f 'Runfile' ]]
+	then
+		echo
+		echo "./Runfile"
+		cat Runfile
+		echo
+		echo 'Your Runfile has been created successfully!'
+		echo 'Type "run" to review available commands.'
+		echo
+	fi
+}
+
 function main() ( set -euo pipefail
 	local makefile='' buffer='' at='' task=''
 	local arg='' make_args=() named_args=() pos_args=() pos_arg_idx=0
@@ -206,10 +363,12 @@ function main() ( set -euo pipefail
 
 	# -h, --help, --usage · Print usage documentation then exit.
 	# -v, --version       · Print current runfile.sh version then exit.
+	# -w, --wizard        · Take a guided process to create a runfile.
 	# NOTE: Only handle these args if they are the ONLY args.
 	# It should be possible to define runfile commands with their own -h, --help, etc.
 	[[ "$*" == '-h' || "$*" == '--help' || "$*" == '--usage' ]] && usage && exit 0
 	[[ "$*" == '-v' || "$*" == '--version' ]] && version | cut -dv -f2 && exit 0
+	[[ "$*" == '-w' || "$*" == '--wizard' ]] && wizard && exit 0
 
 	# --runfile-create    · Write template Runfile, then open in editor (optional).
 	# --runfile-write     · Alias for --runfile-create.
