@@ -106,10 +106,12 @@ EOF
 @test "${BATS_TEST_NUMBER} run --runfile-aliases" {
 	execute_test_command
 	assert_output "$( cat <<-EOF
+		# Runfile Aliases
 		alias rs='run start'
 		alias rb='run build'
 		alias rt='run test'
 		alias rl='run lint'
+		# END Runfile Aliases
 	EOF
 	)"
 	assert_success

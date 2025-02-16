@@ -39,6 +39,7 @@ taskxyz: taskabc # task description, taskxyz runs taskabc first just like Make w
 --runfile-overwrite ··· Overwrite existing Runfile with template Runfile.
 --makefile-overwrite ·· Overwrite existing Makefile with generated Makefile.
 --runfile-aliases ····· Print command aliases for nearest Runfile (for shell config).
+--runfile-aliases-write <filename> Attempt to write/update aliases in specified file.
 
 · Options ·
 
@@ -170,10 +171,12 @@ function print-runfile-commands() {
 }
 
 function print-runfile-aliases() {
+	echo '# Runfile Aliases'
 	grep -E '[a-zA-Z0-9_-][a-zA-Z0-9 _-]+:[a-zA-Z0-9 _-]*#' "$( smartcase-file runfile )" \
 	| sed -E 's/.*(^| )([a-zA-Z0-9_-][a-zA-Z0-9_-]+):.*/\2/g' \
 	| awk '!_[substr($1,1,1)]++' `# unique on first char of each command` \
 	| sed -E "s/(.)(.*)/alias ${RUNFILE_ALIASES_PREFIX:-r}\1='run \1\2'/"
+	echo '# END Runfile Aliases'
 }
 
 function cd-to-nearest-file() { local lower='' upper='' title=''
@@ -388,6 +391,13 @@ function main() ( set -euo pipefail
 	# --runfile-aliases · Print current Runfile aliases, or exit with error if not found.
 	[[ " $* " == *' --runfile-aliases '* ]] && \
 		cd-to-nearest-file runfile && print-runfile-aliases "$@" && exit 0
+
+	# TODO EXPERIMENTAL, file handling needs implementation:
+	# --runfile-aliases-write
+	[[ " $* " == *' --runfile-aliases-write '* ]] && \
+		perl -0777 -pe "s/# Runfile Aliases\n.*# END Runfile Aliases\n/$(
+			print-runfile-aliases "$@"
+		)\n/" ~/.aliases && exit 0
 
 	# --runfile · Print current Runfile, or exit with error if not found.
 	[[ " $* " == *' --runfile '* ]] || \
