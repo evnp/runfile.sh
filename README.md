@@ -26,6 +26,19 @@ What is a Runfile?
 ------------------
 A `Runfile` is like a `Makefile`, but simpler. Runfiles and Makefiles can live together within a project in harmony.
 
+```make
+# An example Runfile
+
+start: build # start application, after building
+  <command(s) to start application>
+
+build: # build application
+  <command(s) to build application>
+
+test: build # run all tests, after building
+  <command(s) to run all tests>
+```
+
 Where a Makefile might be used to codify steps which build various artefacts relevant to a project, a Runfile could be used to encode various tasks a person would often want to carry out when interacting with that project. For example: running tests, linting source code, installing dependencies, generating documentation, preparing a release. These tasks can be implemented within a Makefile, but using a Runfile make the process much simpler – Make is a powerful tool with file-change tracking and dependency-graph awareness, among many other things that aren't usually relevant to running simple tasks.
 
 Runfiles can be thought of as filling a similar role to these other excellent projects: just, TODO
