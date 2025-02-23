@@ -166,7 +166,7 @@ function print-runfile-commands() {
 	# Print Runfile command aliases if any are currently available:
 	echo
 	awk 'NR==FNR{a[$0]=1;next}a[$0]' <( bash -ic 'alias' ) <( print-runfile-aliases ) \
-	| sed -e "s/\'/\"/g" -e 's/^/  /g' -e 's/$/\n/g' \
+	| sed -e "s/\'/ /g" -e "s/= / · /" -e 's/^/  /' -e 's/$/\n/' \
 	| perl -0777 -pe 's/\n\n(.)/\n\1/g'
 }
 
