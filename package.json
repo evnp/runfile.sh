@@ -1,6 +1,6 @@
 {
   "name": "runfile.sh",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Language-agnostic project task runner built on the ubiquitous Make.",
   "main": "runfile.sh",
   "files": [
