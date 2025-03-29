@@ -20,7 +20,7 @@
     "testfw": "run() { npm run -s testf \"$@\"; fswatch -0 -o -r . | xargs -0 -n1 npm run testf \"$@\"; }; run",
     "testiw": "run() { npm run -s testi \"$@\"; fswatch -0 -o -r . | xargs -0 -n1 npm run testi \"$@\"; }; run",
     "simulate": "./simulator",
-    "man": "sed '1,/^Usage$/d' README.md | sed '1s/^/DESCRIPTION\\nBasic usage:\\n/' | marked-man --name=runfile.sh | sed -E 's/^(..Brunfile.sh)/\\1 – “tmux-execute” – a lightweight tmux command \\& layout composer/' | tr '\\n' '\\r' | sed -E 's/\\([^\\)]*\\)//g' | tr '\\r' '\\n' > ./man/run.1",
+    "man": "sed '1,/^Usage$/d' README.md | sed '1s/^/DESCRIPTION\\nBasic usage:\\n/' | marked-man --name=runfile.sh | sed -E 's/^(..Brunfile.sh)/\\1 – Language-agnostic project task runner built on the ubiquitous Make./' | tr '\\n' '\\r' | sed -E 's/\\([^\\)]*\\)//g' | tr '\\r' '\\n' > ./man/run.1",
     "release": "npm pack && tar -xvzf *.tgz && rm -rf package *.tgz && echo $'\n'\"Press ENTER to publish the files above · CTRL+C to cancel · node $( node -v ) · npm $( npm -v )\"$'\n\n' && head -n 1 >/dev/null && npm publish",
     "releasenext": "npm pack && tar -xvzf *.tgz && rm -rf package *.tgz && echo $'\n'\"Press ENTER to publish the files above (tag=next) · CTRL+C to cancel · node $( node -v ) · npm $( npm -v )\"$'\n\n' && head -n 1 >/dev/null && npm publish --tag next",
     "tf": "npm run -s testf",
