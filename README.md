@@ -30,18 +30,19 @@ A `Runfile` is like a `Makefile`, but simpler. Runfiles and Makefiles can live t
 # An example Runfile
 
 start: build # start application, after building
-  <command(s) to start application>
+  ./run-server                # example command
+  open http://localhost:1234  # example command
 
 build: # build application
-  <command(s) to build application>
+  make all                    # plays well with make, because it's built on make
 
-test: build # run all tests, after building
-  <command(s) to run all tests>
+test: build # run all tests or specific test, after building
+  ./run-tests --watch $(1)    # example command; accepts a positional arg (optional)
 ```
 
 Where a Makefile might be used to codify steps which build various artefacts relevant to a project, a Runfile could be used to encode various tasks a person would often want to carry out when interacting with that project. For example: running tests, linting source code, installing dependencies, generating documentation, preparing a release. These tasks can be implemented within a Makefile, but using a Runfile make the process much simpler – Make is a powerful tool with file-change tracking and dependency-graph awareness, among many other things that aren't usually relevant to running simple tasks.
 
-Runfiles can be thought of as filling a similar role to these other excellent projects: just, TODO
+Runfiles can be thought of as filling a similar role to these other excellent projects: [just](https://github.com/casey/just), [mise (tasks)](https://mise.jdx.dev/tasks/)
 
 Usage
 -----
