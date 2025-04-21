@@ -4,7 +4,9 @@ _tasks: .tasks
 .PHONY: start
 start: stop # start app
 	@run build env=dev # tasks can be run directly from other tasks
-	@echo "starting app"
+	@echo "starting app in 3 seconds"
+	@loading
+	@sleep 3
 
 .PHONY: stop
 stop: # stop app
@@ -25,5 +27,5 @@ lint: # lint all files or specific file [vars: file]
 
 .PHONY: .tasks
 .tasks:
-	@grep -E "^([a-zA-Z0-9 _-]+:[a-zA-Z0-9 _-]*#)" $(MAKEFILE_LIST) \
-	| sed -Ee "s/^/  /" -e "s/[ ]*:[a-zA-Z0-9 _-]*#[ ]*/ · /"
+	@grep -E "^(([[:alnum:]_-][[:alnum:][:space:]_-]+):([[:alnum:][:space:]_-]+)?#)" $(MAKEFILE_LIST) \
+	| sed -Ee "s/^/  /" -e 's/[[:space:]]*:[[:alnum:] _-]*#[[:space:]]*/ · /'

@@ -1,8 +1,13 @@
 start: stop # start app
 	run build env=dev # tasks can be run directly from other tasks
-	echo "starting app"
+	echo "starting app in 3 seconds"
+	loading
+	sleep 3
+	EXIT loading --fin
+	INT loading --fin
 
 stop: # stop app
+	HUP loading --fin
 	echo "stopping app"
 
 build: lint # build app for environment [vars: env]

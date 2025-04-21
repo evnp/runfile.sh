@@ -32,6 +32,7 @@ taskxyz: taskabc # task description, taskxyz runs taskabc first just like Make w
 -v --version ·········· Print current runfile.sh version then exit.
 --runfile ············· Print contents of nearest Runfile (in current dir or dir above).
 --makefile ············ Print contents of Makefile generated from nearest Runfile.
+--makefile-task-TASK ·· Print contents of single task from nearest Makefile.
 --runfile-edit ········ Open nearest Runfile with \$EDITOR.
 --makefile-edit ······· Open nearest Makefile with \$EDITOR.
 --runfile-create ······ Write template Runfile in current dir.
@@ -50,10 +51,10 @@ taskxyz: taskabc # task description, taskxyz runs taskabc first just like Make w
 --runfile-verbose ···· Print code line-by-line to terminal during task execution.
 --makefile-compat ···· Disable all features not compatible with Make.
 
---make-dry-run ·· Don't execute task code, just print line-by-line to terminal instead.
---make-* ········ Pass any argument directly to they underlying Make command
-                · by prefixing the intended Make argument with "--make-".
-                · For example, --make-dry-run will pass --dry-run to Make.
+--make-dry-run ······· Don't execute task code, just print line-by-line to terminal.
+--make-ARGUMENT ······ Pass any argument directly to they underlying Make command
+										 · by prefixing the intended Make argument with "--make-".
+                		 · For example, --make-dry-run will pass --dry-run to Make.
 EOF
 }
 
@@ -161,7 +162,7 @@ function print-makefile() {
 function print-runfile-commands() {
 	# Print current Runfile commands:
 	echo
-	grep -E '[a-zA-Z0-9_-][a-zA-Z0-9 _-]+:[a-zA-Z0-9 _-]*#' "$( smartcase-file runfile )" \
+	grep -E '[[:alnum:]_-][[:alnum:] _-]+:[[:alnum:] _-]*#' "$( smartcase-file runfile )" \
 	| sed -Ee 's/:.*#/ · /g' -e 's/  / /g' -e 's/^/  /g'
 	# Print Runfile command aliases if any are currently available:
 	echo
@@ -172,8 +173,8 @@ function print-runfile-commands() {
 
 function print-runfile-aliases() {
 	echo '# Runfile Aliases'
-	grep -E '[a-zA-Z0-9_-][a-zA-Z0-9 _-]+:[a-zA-Z0-9 _-]*#' "$( smartcase-file runfile )" \
-	| sed -E 's/.*(^| )([a-zA-Z0-9_-][a-zA-Z0-9_-]+):.*/\2/g' \
+	grep -E '[[:alnum:]_-][[:alnum:] _-]+:[[:alnum:] _-]*#' "$( smartcase-file runfile )" \
+	| sed -E 's/.*(^| )([[:alnum:]_-][[:alnum:]_-]+):.*/\2/g' \
 	| awk '!_[substr($1,1,1)]++' `# unique on first char of each command` \
 	| sed -E "s/(.)(.*)/alias ${RUNFILE_ALIASES_PREFIX:-r}\1='run \1\2'/"
 	echo '# END Runfile Aliases'
@@ -262,7 +263,7 @@ function wizard() {
 			elif [[ "$REPLY" == 'DONE' ]]
 			then
 				break
-			elif ! [[ "$REPLY" =~ ^[a-zA-Z0-9_-]+$ ]]
+			elif ! [[ "$REPLY" =~ ^[[:alnum:]_-]+$ ]]
 			then
 				echo " · Run command names should only have characters a-z A-Z 0-9 _ - and no spaces ·"
 				echo " · Please try again ·"
@@ -357,10 +358,12 @@ function wizard() {
 	fi
 }
 
-function main() ( set -euo pipefail
+function run() ( set -euo pipefail
 	local makefile='' buffer='' at='' task=''
 	local arg='' make_args=() named_args=() pos_args=() pos_arg_idx=0
-	local verbose_pattern_1='' verbose_pattern_2=''
+
+	local task_re='' trap_re='' vbse_re_1='' vbse_re_2=''
+	local trap_sig='' runfile_grep_filter_args=()
 
 	[[ "$*" == '' ]] && print-runfile-commands && exit 0
 
@@ -404,6 +407,10 @@ function main() ( set -euo pipefail
 	[[ "$*" == '--runfile-compact' ]] && \
 		cd-to-nearest-file runfile && print-file-smartcase runfile "$@" && exit 0
 
+	# --makefile-task-TASK · Print contents single task from nearest Makefile and exit.
+	[[ " $* " =~ [[:space:]]--makefile-task-([[:alnum:]_-]+)[[:space:]] ]] && \
+		RUNFILE_SKIP_SUBTASKS=1 run --make-dry-run "${BASH_REMATCH[1]}" && exit 0
+
 	# If no Runfile in current dir, navigate up looking for one until we reach $HOME:
 	cd-to-nearest-file runfile
 
@@ -425,7 +432,7 @@ function main() ( set -euo pipefail
 		if [[ "${arg}" == '--make-'* ]]
 		then
 			make_args+=( "${arg/make-}" )
-		elif [[ "${arg}" =~ ^[a-zA-Z0-9_-]+\= ]]
+		elif [[ "${arg}" =~ ^[[:alnum:]_-]+\= ]]
 		then
 			named_args+=( "${arg}" )
 		elif [[ "${arg}" != '--runfile-'* && "${arg}" != '--makefile-'* ]]
@@ -447,13 +454,33 @@ function main() ( set -euo pipefail
 		fi
 	done
 
-	# If --runfile-verbose specified, use modified patterns for Makefile .tasks list,
-	# so that when eah task is printed, its commands are printed line-by-line underneath:
+	# If --runfile-verbose specified, use modified patterns for Makefile .tasks list so
+	# that when each task is printed, its commands are printed line-by-line underneath:
 	if [[ " $* " == *' --runfile-verbose '* ]]
 	then
-		verbose_pattern_1='\\s+|'
-		verbose_pattern_2='s/^([^[:space:]])/\\n\\1/g'
+		vbse_re_1='\\s+|'
+		vbse_re_2='s/^([^[:space:]])/\\n\\1/g'
 	fi
+
+task_re='([[:alnum:]_-][[:alnum:][:space:]_-]+):([[:alnum:][:space:]_-]+)?#'
+trap_re='^\s*(EXIT|HUP|INT|QUIT|ABRT|KILL|ALRM|TERM)'
+
+if [[ "${RUNFILE_TRAP:-}" == '*' ]]
+then
+	runfile_grep_filter_args=( -E "^(${task_re}|${trap_re})" )
+elif [[ -n "${RUNFILE_TRAP:-}" ]]
+then
+	runfile_grep_filter_args=( -E "^(${task_re}|\\s+${RUNFILE_TRAP})" )
+else
+	runfile_grep_filter_args=( -Ev "${trap_re}" )
+fi
+
+if [[ -n "${RUNFILE_SKIP_SUBTASKS:-}" ]]
+then
+	subtask_re=''
+else
+	subtask_re='\2'
+fi
 
 # ::::::::::::::::::::::::::::::::::::::::::
 # Construct temporary Makefile from Runfile:
@@ -461,17 +488,21 @@ cat <<EOF> "${makefile}"
 .PHONY: _tasks
 _tasks: .tasks
 $(
-	sed -E \
-		-e "s!^[[:space:]]*!\t${at}!" \
-		-e "s!^\t${at}([a-zA-Z0-9 _-]+):([a-zA-Z0-9 _-]+)?#(.*)\$!\n.PHONY: \1\n\1:\2#\3!" \
-		-e "s!^\t${at}\$!!" \
-		Runfile | cat -s
+	grep "${runfile_grep_filter_args[@]}" < "$( smartcase-file runfile )" \
+	| sed -E \
+			-e 's/[[:space:]]*$//' \
+				`# trim any trailing whitespace from lines` \
+			-e "s!^[[:space:]]*([^[:space:]])!\t${at}\1!" \
+				`# prefix every non-blank line with TAB (or TAB-@, if verbose)` \
+			-e "s!^\t${at}${task_re}(.*)\$!\n.PHONY: \1\n\1:${subtask_re}\#\3!" \
+				`# remove TAB (or TAB-@) prefix from lines that match task pattern` \
+	| cat -s
 )
 
 .PHONY: .tasks
 .tasks:
-	@grep -E "^(${verbose_pattern_1}[a-zA-Z0-9 _-]+:[a-zA-Z0-9 _-]*#)" \$(MAKEFILE_LIST) \\
-	| sed -Ee "${verbose_pattern_2:-s/^/  /}" -e "s/[ ]*:[a-zA-Z0-9 _-]*#[ ]*/ · /"
+	@grep -E "^(${vbse_re_1}${task_re})" \$(MAKEFILE_LIST) \\
+	| sed -Ee "${vbse_re_2:-s/^/  /}" -e 's/[[:space:]]*:[[:alnum:] _-]*#[[:space:]]*/ · /'
 EOF
 # Done with temporary Makefile construction.
 # ::::::::::::::::::::::::::::::::::::::::::
@@ -486,7 +517,7 @@ EOF
 		# If outputting Makefile, skip this section.
 	then
 		buffer="$(
-			sed -E 's!(\$\((@|[0-9]+|[a-zA-Z][a-zA-Z0-9_]*)\))!\`printf '"'%s' '\1'"'\`!g' \
+			sed -E 's!(\$\((@|[0-9]+|[[:alpha:]][[:alnum:]_]*)\))!\`printf '"'%s' '\1'"'\`!g' \
 				"${makefile}"
 		)"
 		# Wrap all Runfile argument patterns in printf, eg. $(@) -> `printf '%s' '$(@)'`
@@ -553,10 +584,36 @@ EOF
 		exit 0
 	fi
 
-	# Main Path · Prepare arguments to be passed to Make:
+	# Main Path · Prepare arguments to be passed to Make, and set any specified traps:
 	if [[ -n "${task}" ]]
 	then
 		make_args+=( "${task}" )
+
+		# Set all traps specified by current task in Makefile:
+		# (unless a RUNFILE_TRAP is currently being executed)
+		if [[ -z "${RUNFILE_TRAP:-}" ]]
+		then
+			for trap_sig in $(
+				RUNFILE_TRAP='*' run "--makefile-task-${task}" \
+				| cut -d' ' -f1  | grep -vE '^make(\[\d+\])?\:' | xargs
+			)
+			do
+				# shellcheck disable=SC2064
+				# "Use single quotes, otherwise this expands now rather than when signalled."
+				# We want this to expand now rather than when the trap is triggered.
+				trap \
+				"RUNFILE_SKIP_SUBTASKS=1 RUNFILE_TRAP=${trap_sig} run ${task} ${make_args[*]}" \
+				"${trap_sig}"
+			done
+		elif [[ "${RUNFILE_TRAP}" != '*' ]]
+		then
+			# If a specific runfile trap is being triggered, remove that trap's prefix
+			# (eg. EXIT) from lines in makefile so they can be executed normally:
+			buffer="$( sed -E "s!^\t${at}${RUNFILE_TRAP} !\t${at}!" "${makefile}" )"
+
+			# Write buffer back to temporary makefile:
+			echo "${buffer}" > "${makefile}"
+		fi
 	fi
 	if (( ${#named_args[@]} ))
 	then
@@ -571,4 +628,4 @@ EOF
 	exit 0
 )
 
-main "$@"
+run "$@"
