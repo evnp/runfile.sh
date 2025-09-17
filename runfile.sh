@@ -2,6 +2,8 @@
 
 # runfile.sh · v0.0.3
 
+trap "" SIGTSTP
+
 function version() {
 	head -n 3 < "$0" | tail -1 | cut -c3-
 }
@@ -201,14 +203,27 @@ function cd-to-nearest-file() { local lower='' upper='' title=''
 	done
 }
 
+function ordinal() {
+	case "$1" in
+		*1[0-9] | *[04-9]) echo "$1"th ;;
+		*1) echo "$1"st ;;
+		*2) echo "$1"nd ;;
+		*3) echo "$1"rd ;;
+	esac
+}
+
+function bold() {
+	echo "$( tput bold )$*$( tput sgr0 )"
+}
+
 function wizard() {
-	local state='action1' prev_states=() prev_runfiles=()
+	local state='action1' action='' actionidx=0 cmdidx=0 prev_states=() prev_runfiles=()
 
 	if [[ -e 'Runfile' ]]
 	then
 		while TRUE
 		do
-			read -rsn1 -p ' · Runfile already exists. Overwrite? [y|N] · '
+			read -rsn1 -p " ·  Runfile already exists. $( bold 'Overwrite?' )  ·  [ $( bold 'y' ) | $( bold 'N' ) ]  · "
 			if [[ "$REPLY" == 'y' || "$REPLY" == 'Y' ]]
 			then
 				rm Runfile
@@ -223,11 +238,33 @@ function wizard() {
 		done
 	fi
 
-	read -rsn1 -p " · At each of the following prompts, press ENTER to continue · "
-	echo
+	function record-step() {
+		prev_states=( "${state}" "${prev_states[@]}" )
+		prev_actions=( "${action}" "${prev_actions[@]}" )
+		prev_actionidxs=( "${actionidx}" "${prev_actionidxs[@]}" )
+		prev_cmdidxs=( "${cmdidx}" "${prev_cmdidxs[@]}" )
+		if [[ -f 'Runfile' ]]
+		then
+			prev_runfiles=( "$( cat Runfile )" "${prev_runfiles[@]}" )
+		else
+			prev_runfiles=( "" "${prev_runfiles[@]}" )
+		fi
+	}
 
-	read -rsn1 -p " · At each of the following prompts, type BACK to return to previous step · "
-	echo
+	function undo-step() {
+		cat <<-EOF > Runfile
+			${prev_runfiles[0]}
+		EOF
+		state="${prev_states[0]}"
+		action="${prev_actions[0]}"
+		actionidx="${prev_actionidxs[0]}"
+		cmdidx="${prev_cmdidxs[0]}"
+		prev_states=( "${prev_states[@]:1}" )
+		prev_runfiles=( "${prev_runfiles[@]:1}" )
+		prev_actions=( "${prev_actions[@]:1}" )
+		prev_actionidxs=( "${prev_actionidxs[@]:1}" )
+		prev_cmdidxs=( "${prev_cmdidxs[@]:1}" )
+	}
 
 	while TRUE
 	do
@@ -235,127 +272,130 @@ function wizard() {
 		then
 			echo
 			echo './Runfile'
-			echo '---------'
-			cat Runfile
-			[[ "${state}" == 'description' ]] && echo
-			echo '---------'
-			echo "${prev_states[@]}"
+			echo -n '┌────┴'
+			printf "─%.0s" $( seq $(( "$( awk '{ print length }' Runfile | sort -n | tail -1 )" - 8 )))
+			echo '─┐'
+			echo
+			bold "$( sed "s/#.*$/$( tput sgr0 )&$( tput bold )/" Runfile )"
+			echo
+			echo -n '└─────'
+			printf "─%.0s" $( seq $(( "$( awk '{ print length }' Runfile | sort -n | tail -1 )" - 8 )))
+			echo '─┘'
 			echo
 		fi
 
-		if [[ "${state}" == 'action1' || "${state}" == 'action2' ]]
+		if [[ "${state}" == 'finish' ]]
 		then
-			if [[ "${state}" == 'action1' ]]
+			echo 'Your Runfile has been created successfully!'
+			echo "Start using it by typing $( bold 'run' ) to review available commands."
+			echo
+			break
+		elif [[ "${state}" == 'action1' || "${state}" == 'action2' ]]
+		then
+			if [[ -z "${action}" ]]
 			then
-				read -rp " · Enter first run action name, or type DONE ·"$'\n'" ··· "
+				read -rp " ·  Enter $( bold "$( ordinal "$(( actionidx + 1 ))" )" ) action name…  ·"$'\n'"$( bold ' ·· ' )"
 			else
-				read -rp " · Enter another run action name, or type DONE ·"$'\n'" ··· "
+				read -rp " ·  Enter $( bold "$( ordinal "$(( actionidx + 1 ))" )" ) action name…  ·  [ $( bold 'leave blank' ) to continue | $( bold 'UNDO' ) to go back ]  ·"$'\n'"$( bold ' ·· ' )"
 			fi
-			if [[ "$REPLY" == 'BACK' ]]
+			if [[ "$REPLY" == 'UNDO' ]]
 			then
 				if (( ${#prev_states[@]} )) && (( ${#prev_runfiles[@]} ))
 				then
-					echo "${prev_runfiles[0]}" > Runfile
-					state="${prev_states[0]}"
-					prev_states=( "${prev_states[@]:1}" )
-					prev_runfiles=( "${prev_runfiles[@]:1}" )
+					undo-step
 				fi
-			elif [[ "$REPLY" == 'DONE' ]]
+			elif [[ "$REPLY" == '' && -n "${action}" ]]
 			then
-				break
+				state="finish"
 			elif ! [[ "$REPLY" =~ ^[[:alnum:]_-]+$ ]]
 			then
-				echo " · Run command names should only have characters a-z A-Z 0-9 _ - and no spaces ·"
-				echo " · Please try again ·"
-				echo
-			else
-				prev_states=( "${state}" "${prev_states[@]}" )
-				if [[ -f 'Runfile' ]]
+				if [[ -n "$REPLY" ]]
 				then
-					prev_runfiles=( "$( cat Runfile )" "${prev_runfiles[@]}" )
-				else
-					prev_runfiles=( "" "${prev_runfiles[@]}" )
+					echo " ·  Run command names should only have characters a-z A-Z 0-9 _ - and no spaces  · "
+					echo " ·  $( bold 'Please try again' )  · "
+					echo
 				fi
-				echo -n "$REPLY:" >> Runfile
+			else
+				record-step
+
+				if grep -q '[^[:space:]]' Runfile &>/dev/null
+				then
+					echo -n "$REPLY:" >> Runfile
+				else
+					echo -n "$REPLY:" > Runfile
+				fi
+
 				state='description'
+				action="$REPLY"
+				(( actionidx++ ))
+				cmdidx=0
 			fi
 		elif [[ "${state}" == 'description' ]]
 		then
-			read -rp " · What does this action do? (leave blank to skip) ·"$'\n'" ··· "
-			if [[ "$REPLY" == 'BACK' ]]
+			read -rp " ·  What does $( bold "${action}" ) do?  ·  [ $( bold 'leave blank' ) to skip | $( bold 'UNDO' ) to go back ]  ·"$'\n'"$( bold ' ·· ' )"
+			if [[ "$REPLY" == 'UNDO' ]]
 			then
-				echo "PREV_STATES" "${prev_states[@]}"
 				if (( ${#prev_states[@]} )) && (( ${#prev_runfiles[@]} ))
 				then
-					echo -n "${prev_runfiles[0]}" > Runfile
-					state="${prev_states[0]}"
-					prev_states=( "${prev_states[@]:1}" )
-					prev_runfiles=( "${prev_runfiles[@]:1}" )
+					undo-step
 				fi
 			else
-				prev_states=( "${state}" "${prev_states[@]}" )
-				prev_runfiles=( "$( cat Runfile )" "${prev_runfiles[@]}" )
-				state='command1'
+				record-step
+
 				if [[ -n "$REPLY" ]]
 				then
-					echo " # $REPLY" >> Runfile
+					# Append to last line of file:
+					sed '$s/$/'" # $REPLY"'/' <<-EOF > Runfile
+						${prev_runfiles[0]}
+					EOF
 				else
+					# Append newline to file:
 					echo >> Runfile
 				fi
+
+				state='command1'
 			fi
 		elif [[ "${state}" == 'command1' ]]
 		then
-			read -rp " · Enter the first shell command that should be run ·"$'\n'" ··· "
-			if [[ "$REPLY" == 'BACK' ]]
+			read -rp " ·  Enter $( bold '1st' ) command for $( bold "${action}" )…  ·"$'\n'"$( bold ' ·· ' )"
+			if [[ "$REPLY" == 'UNDO' ]]
 			then
 				if (( ${#prev_states[@]} )) && (( ${#prev_runfiles[@]} ))
 				then
-					echo "${prev_runfiles[0]}" > Runfile
-					state="${prev_states[0]}"
-					prev_states=( "${prev_states[@]:1}" )
-					prev_runfiles=( "${prev_runfiles[@]:1}" )
+					undo-step
 				fi
 			elif [[ -n "$REPLY" ]]
 			then
-				prev_states=( "${state}" "${prev_states[@]}" )
-				prev_runfiles=( "$( cat Runfile )" "${prev_runfiles[@]}" )
-				state='command2'
+				record-step
+
 				echo "  $REPLY" >> Runfile
+
+				state='command2'
+				(( cmdidx++ ))
 			fi
 		elif [[ "${state}" == 'command2' ]]
 		then
-			read -rp " · Enter another shell command that should be run, or type DONE ·"$'\n'" ·· "
-			if [[ "$REPLY" == 'BACK' ]]
+			read -rp " ·  Enter $( bold "$( ordinal "$(( cmdidx + 1 ))" )" ) command for $( bold "${action}" )…  ·  [ $( bold 'leave blank' ) to continue | $( bold 'UNDO' ) to go back ]  ·"$'\n'"$( bold ' ·· ' )"
+			if [[ "$REPLY" == 'UNDO' ]]
 			then
 				if (( ${#prev_states[@]} )) && (( ${#prev_runfiles[@]} ))
 				then
-					echo "${prev_runfiles[0]}" > Runfile
-					state="${prev_states[0]}"
-					prev_states=( "${prev_states[@]:1}" )
-					prev_runfiles=( "${prev_runfiles[@]:1}" )
+					undo-step
 				fi
-			elif [[ "$REPLY" == 'DONE' ]]
+			elif [[ "$REPLY" == '' ]]
 			then
-				prev_states=( "${state}" "${prev_states[@]}" )
+				record-step
+
 				state='action2'
 			else
-				prev_states=( "${state}" "${prev_states[@]}" )
-				prev_runfiles=( "$( cat Runfile )" "${prev_runfiles[@]}" )
+				record-step
+
 				echo "  $REPLY" >> Runfile
+
+				(( cmdidx++ ))
 			fi
 		fi
 	done
-
-	if [[ -f 'Runfile' ]]
-	then
-		echo
-		echo "./Runfile"
-		cat Runfile
-		echo
-		echo 'Your Runfile has been created successfully!'
-		echo 'Type "run" to review available commands.'
-		echo
-	fi
 }
 
 function run() ( set -euo pipefail
