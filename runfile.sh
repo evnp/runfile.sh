@@ -4,6 +4,10 @@
 
 trap "" SIGTSTP
 
+function bold() {
+	echo "$( tput bold )$*$( tput sgr0 )"
+}
+
 function version() {
 	head -n 3 < "$0" | tail -1 | cut -c3-
 }
@@ -13,62 +17,62 @@ cat <<EOF
 
 · $( version ) ·
 
-· Language-agnostic project task runner · Missing companion of the ubiquitous Make ·
-· Use a Runfile on its own to manage project tasks · start, build, test, lint, etc ·
-· Use Runfile & Makefile in tandem to keep project tasks and build steps organized ·
+· Language-agnostic project task runner · The venerable Make's missing companion ·
+· Use Runfile by itself to manage your project tasks · start build test lint etc ·
+· Use Runfile & Makefile in tandem to keep project tasks + build steps organized ·
 
-· Usage · run ····················· Print list of all available tasks.
-          run [options] [task] ···· Run a task (ignored if action is specified).
-          run [options] [action] ·· Run a Runfile/Makefile action.
+· Usage · run ··················· Print list of all available tasks.
+          run [task] ············ Run a task.
+          run [task] [options] ·· Run a task with options available to task code.
 
-# ./Runfile syntax  (this is a comment!)
-taskabc: # task description
+          run --[help|version|runfile|makefile|edit|new|alias] [options]
+          run -[h|v|r|m|e|n|a] ·· Actions for managing Runfiles; details below.
+
+# ./Runfile -- syntax primer (this line is a comment!)
+taskabc: # Task description.
   shell command(s) for task abc
-taskxyz: taskabc # task description, taskxyz runs taskabc first just like Make would
+taskxyz: taskabc # Task description, taskxyz runs taskabc first just like Make would.
   shell command(s) for task xyz
-#^ whitespace doesn't matter; tabs, spaces, blank lines are all ok, or may be omitted
+#^ Unlike Make, whitespace doesn't matter; tabs, spaces, extra blank lines are all ok.
 
-· Actions ·
+-h --help ··········· Print this usage documentation then exit.
+-v --version ········ Print current runfile.sh version then exit.
+-r --runfile ········ Print contents of nearest Runfile (in current dir or dir above).
+-m --makefile ······· Print contents of Makefile generated from nearest Runfile.
+-m --makefile TASK ·· Print contents of single task from generated Makefile.
+-e --edit ··········· Open nearest Runfile with \$EDITOR.
+-n --new ············ Interactively create new Runfile in current dir.
+-a --alias ·········· Show command aliases for nearest Runfile (for shell config).
+-a --alias FILENAME · Attempt to write/update aliases within shell config file.
+--eject ············· Generate Makefile from Runfile and write to current dir.
 
--h --help --usage ····· Print this usage documentation then exit.
--v --version ·········· Print current runfile.sh version then exit.
---runfile ············· Print contents of nearest Runfile (in current dir or dir above).
---makefile ············ Print contents of Makefile generated from nearest Runfile.
---makefile-task-TASK ·· Print contents of single task from nearest Makefile.
---runfile-edit ········ Open nearest Runfile with \$EDITOR.
---makefile-edit ······· Open nearest Makefile with \$EDITOR.
---runfile-create ······ Write template Runfile in current dir.
---makefile-create ····· Write generated Makefile in current dir.
---runfile-overwrite ··· Overwrite existing Runfile with template Runfile.
---makefile-overwrite ·· Overwrite existing Makefile with generated Makefile.
---runfile-aliases ····· Print command aliases for nearest Runfile (for shell config).
---runfile-aliases-write <filename> Attempt to write/update aliases in specified file.
+--verbose ··········· Print code line-by-line to terminal during task execution.
+--compact ··········· Use "compact" formatting for Runfile when creating or printing.
+--compat ············ Disable all features not compatible with Make.
+--confirm ··········· Always ask for confirmation before opening files with \$EDITOR.
+--noconfirm ········· Never ask for confirmation before opening files with \$EDITOR.
+--noedit ············ Never open files with \$EDITOR.
+RUNFILE_VERBOSE=1 RUNFILE_COMPACT=1   RUNFILE_COMPAT=1 ·  All options may also be  ·
+RUNFILE_CONFIRM=1 RUNFILE_NOCONFIRM=1 RUNFILE_NOEDIT=1 · provided as env variables ·
 
-· Options ·
-
---runfile-compact ···· Use "compact" formatting for Runfile when creating or printing.
---runfile-confirm ···· Always ask for confirmation before opening files with \$EDITOR.
---runfile-noconfirm ·· Never ask for confirmation before opening files with \$EDITOR.
---runfile-noedit ····· Never open files with \$EDITOR.
---runfile-verbose ···· Print code line-by-line to terminal during task execution.
---makefile-compat ···· Disable all features not compatible with Make.
-
---make-dry-run ······· Don't execute task code, just print line-by-line to terminal.
---make-ARGUMENT ······ Pass any argument directly to they underlying Make command
-										 · by prefixing the intended Make argument with "--make-".
-                		 · For example, --make-dry-run will pass --dry-run to Make.
+--make-dry-run ······ Don't execute task code, just print line-by-line to terminal.
+--make-ARGUMENT ····· Pass any argument directly to they underlying Make command
+                    · by prefixing the intended Make argument with "--make-".
+                    · For example, --make-dry-run will pass --dry-run to Make.
 EOF
 }
 
-function create-runfile() {
-	if [[ " $* " != *' --runfile-overwrite '* ]] && [[ -e 'Runfile' ]]
+function new-from-template() {
+	if [[ "$* " != '--new-from-template-overwrite '* ]] && [[ -e 'Runfile' ]]
 	then
 		echo 'Runfile already exists. To overwrite, use:'
-		echo 'run --overwrite-runfile'
+		bold 'run --new-from-template-overwrite'
+		echo
 		exit 1
 	fi
 
-	if [[ " $* " != *' --makefile-compat '* ]]
+	if [[ " $* " != *' --compat '* ]] \
+	&& ! [[ "${RUNFILE_COMPAT:-}" =~ ^(1|true|TRUE|True)$ ]]
 	then
 optionally-compact-file "$@" <<EOF > Runfile
 s start: stop # start app
@@ -115,7 +119,8 @@ function compact-file() {
 }
 
 function optionally-compact-file() {
-	if [[ " $* " == *' --runfile-compact '* ]]
+	if [[ " $* " == *' --compact '* ]] \
+	|| [[ "${RUNFILE_COMPACT:-}" =~ ^(1|true|TRUE|True)$ ]]
 	then
 		compact-file
 	else
@@ -144,11 +149,13 @@ function smartcase-file() { local name=''
 
 function edit-file-smartcase() { local name=''
 	name="$( smartcase-file "$1" )"
-	if [[ " $* " != *' --runfile-noedit '* ]]
+	if [[ " $* " != *' --noedit '* ]] \
+	&& ! [[ "${RUNFILE_NOEDIT:-}" =~ ^(1|true|TRUE|True)$ ]]
 	then
-		[[ " $* " == *' --runfile-confirm '* ]] && \
-		[[ " $* " != *' --runfile-noconfirm '* ]] && \
-			read -rsn1 -p "Press any key to edit ${name} with $EDITOR · CTRL+C to exit"
+		[[ " $* " == *' --confirm '* || "${RUNFILE_CONFIRM:-}" =~ ^(1|true|TRUE|True)$ ]] && \
+		[[ " $* " != *' --noconfirm '* ]] && \
+		! [[ "${RUNFILE_NOCONFIRM:-}" =~ ^(1|true|TRUE|True)$ ]] && \
+			read -rsn1 -p "$( bold 'Press any key' ) to edit $( bold "${name}" ) with $( bold "$EDITOR" ) · CTRL+C to exit "
 		$EDITOR "${name}"
 	fi
 }
@@ -194,7 +201,7 @@ function cd-to-nearest-file() { local lower='' upper='' title=''
 			cd ..
 		else
 			echo "No ${title} found. To create one here, use:"
-			echo "run --${lower}-create"
+			echo "run --new"
 			# Note: This message pertains to the user's shell which _won't_ have
 			# changed directory, because this script's main function uses a subshell.
 			# So there's no need to change directory back to where we started here.
@@ -212,12 +219,8 @@ function ordinal() {
 	esac
 }
 
-function bold() {
-	echo "$( tput bold )$*$( tput sgr0 )"
-}
-
 function wizard() {
-	local state='action1' action='' actionidx=0 cmdidx=0 prev_states=() prev_runfiles=()
+	local state='task1' task='' taskidx=0 cmdidx=0 prev_states=() prev_runfiles=()
 
 	if [[ -e 'Runfile' ]]
 	then
@@ -240,8 +243,8 @@ function wizard() {
 
 	function record-step() {
 		prev_states=( "${state}" "${prev_states[@]}" )
-		prev_actions=( "${action}" "${prev_actions[@]}" )
-		prev_actionidxs=( "${actionidx}" "${prev_actionidxs[@]}" )
+		prev_tasks=( "${task}" "${prev_tasks[@]}" )
+		prev_taskidxs=( "${taskidx}" "${prev_taskidxs[@]}" )
 		prev_cmdidxs=( "${cmdidx}" "${prev_cmdidxs[@]}" )
 		if [[ -f 'Runfile' ]]
 		then
@@ -256,13 +259,13 @@ function wizard() {
 			${prev_runfiles[0]}
 		EOF
 		state="${prev_states[0]}"
-		action="${prev_actions[0]}"
-		actionidx="${prev_actionidxs[0]}"
+		task="${prev_tasks[0]}"
+		taskidx="${prev_taskidxs[0]}"
 		cmdidx="${prev_cmdidxs[0]}"
 		prev_states=( "${prev_states[@]:1}" )
 		prev_runfiles=( "${prev_runfiles[@]:1}" )
-		prev_actions=( "${prev_actions[@]:1}" )
-		prev_actionidxs=( "${prev_actionidxs[@]:1}" )
+		prev_tasks=( "${prev_tasks[@]:1}" )
+		prev_taskidxs=( "${prev_taskidxs[@]:1}" )
 		prev_cmdidxs=( "${prev_cmdidxs[@]:1}" )
 	}
 
@@ -290,13 +293,13 @@ function wizard() {
 			echo "Start using it by typing $( bold 'run' ) to review available commands."
 			echo
 			break
-		elif [[ "${state}" == 'action1' || "${state}" == 'action2' ]]
+		elif [[ "${state}" == 'task1' || "${state}" == 'task2' ]]
 		then
-			if [[ -z "${action}" ]]
+			if [[ -z "${task}" ]]
 			then
-				read -rp " ·  Enter $( bold "$( ordinal "$(( actionidx + 1 ))" )" ) action name…  ·"$'\n'"$( bold ' ·· ' )"
+				read -rp " ·  Enter $( bold "$( ordinal "$(( taskidx + 1 ))" )" ) task…  ·  [ $( bold 'leave blank' ) to edit template Runfile in $( bold "$EDITOR" ) instead ]  ·"$'\n'"$( bold ' ·· ' )"
 			else
-				read -rp " ·  Enter $( bold "$( ordinal "$(( actionidx + 1 ))" )" ) action name…  ·  [ $( bold 'leave blank' ) to continue | $( bold 'UNDO' ) to go back ]  ·"$'\n'"$( bold ' ·· ' )"
+				read -rp " ·  Enter $( bold "$( ordinal "$(( taskidx + 1 ))" )" ) task…  ·  [ $( bold 'leave blank' ) to continue | $( bold 'UNDO' ) to go back ]  ·"$'\n'"$( bold ' ·· ' )"
 			fi
 			if [[ "$REPLY" == 'UNDO' ]]
 			then
@@ -304,7 +307,10 @@ function wizard() {
 				then
 					undo-step
 				fi
-			elif [[ "$REPLY" == '' && -n "${action}" ]]
+			elif [[ "$REPLY" == '' && -z "${task}" ]]
+			then
+				new-from-template "$@" && edit-file-smartcase runfile "$@" && exit 0
+			elif [[ "$REPLY" == '' ]]
 			then
 				state="finish"
 			elif ! [[ "$REPLY" =~ ^[[:alnum:]_-]+$ ]]
@@ -326,13 +332,13 @@ function wizard() {
 				fi
 
 				state='description'
-				action="$REPLY"
-				(( actionidx++ ))
+				task="$REPLY"
+				(( taskidx++ ))
 				cmdidx=0
 			fi
 		elif [[ "${state}" == 'description' ]]
 		then
-			read -rp " ·  What does $( bold "${action}" ) do?  ·  [ $( bold 'leave blank' ) to skip | $( bold 'UNDO' ) to go back ]  ·"$'\n'"$( bold ' ·· ' )"
+			read -rp " ·  What does $( bold "${task}" ) do?  ·  [ $( bold 'leave blank' ) to skip | $( bold 'UNDO' ) to go back ]  ·"$'\n'"$( bold ' ·· ' )"
 			if [[ "$REPLY" == 'UNDO' ]]
 			then
 				if (( ${#prev_states[@]} )) && (( ${#prev_runfiles[@]} ))
@@ -357,7 +363,7 @@ function wizard() {
 			fi
 		elif [[ "${state}" == 'command1' ]]
 		then
-			read -rp " ·  Enter $( bold '1st' ) command for $( bold "${action}" )…  ·"$'\n'"$( bold ' ·· ' )"
+			read -rp " ·  Enter $( bold '1st' ) command for $( bold "${task}" )…  ·"$'\n'"$( bold ' ·· ' )"
 			if [[ "$REPLY" == 'UNDO' ]]
 			then
 				if (( ${#prev_states[@]} )) && (( ${#prev_runfiles[@]} ))
@@ -375,7 +381,7 @@ function wizard() {
 			fi
 		elif [[ "${state}" == 'command2' ]]
 		then
-			read -rp " ·  Enter $( bold "$( ordinal "$(( cmdidx + 1 ))" )" ) command for $( bold "${action}" )…  ·  [ $( bold 'leave blank' ) to continue | $( bold 'UNDO' ) to go back ]  ·"$'\n'"$( bold ' ·· ' )"
+			read -rp " ·  Enter $( bold "$( ordinal "$(( cmdidx + 1 ))" )" ) command for $( bold "${task}" )…  ·  [ $( bold 'leave blank' ) to continue | $( bold 'UNDO' ) to go back ]  ·"$'\n'"$( bold ' ·· ' )"
 			if [[ "$REPLY" == 'UNDO' ]]
 			then
 				if (( ${#prev_states[@]} )) && (( ${#prev_runfiles[@]} ))
@@ -386,7 +392,7 @@ function wizard() {
 			then
 				record-step
 
-				state='action2'
+				state='task2'
 			else
 				record-step
 
@@ -407,49 +413,56 @@ function run() ( set -euo pipefail
 
 	[[ "$*" == '' ]] && print-runfile-commands && exit 0
 
+	for action in help version runfile makefile edit new alias eject v r m e n a e
+	do
+		if (( ${#action} == 1 ))
+		then
+			action="-${action}"
+		else
+			action="--${action}"
+		fi
+		if [[ "$* " =~ ^((-[a-z]|--[a-z][a-z-]+)[[:space:]])+${action}[[:space:]] ]]
+		then
+			echo "error: $( bold "${action}" ) should be first argument"
+			if ! [[ "${action}" =~ ^(-m|--makefile|-a|--alias)$ ]]
+			then
+				echo "hint: $( bold "run ${action} ${*//${action}/}" )"
+			fi
+			exit 1
+		fi
+	done
+
 	# -h, --help, --usage · Print usage documentation then exit.
 	# -v, --version       · Print current runfile.sh version then exit.
-	# -w, --wizard        · Take a guided process to create a runfile.
-	# NOTE: Only handle these args if they are the ONLY args.
-	# It should be possible to define runfile commands with their own -h, --help, etc.
-	[[ "$*" == '-h' || "$*" == '--help' || "$*" == '--usage' ]] && usage && exit 0
-	[[ "$*" == '-v' || "$*" == '--version' ]] && version | cut -dv -f2 && exit 0
-	[[ "$*" == '-w' || "$*" == '--wizard' ]] && wizard && exit 0
-
-	# --runfile-create    · Write template Runfile, then open in editor (optional).
-	# --runfile-write     · Alias for --runfile-create.
-	# --runfile-overwrite · Can be used to overwrite when Runfile already exists.
-	[[ " $* " == *' --runfile-create '* ]] || \
-	[[ " $* " == *' --runfile-write '* ]] || \
-	[[ " $* " == *' --runfile-overwrite '* ]] && \
-		create-runfile "$@" && edit-file-smartcase runfile --runfile-confirm "$@" && exit 0
-
-	# --runfile-edit  · Edit current Runfile, or exit with error if not found.
-	# --makefile-edit · Edit current Makefile, or exit with error if not found.
-	[[ " $* " == *' --runfile-edit '* ]] && \
+	# -n, --new           · Interactively create a runfile.
+	# -e, --edit          · Edit nearest Runfile, or exit with error if not found.
+	[[ "$* " == '-h '* || "$* " == '--help '* ]] && usage && exit 0
+	[[ "$* " == '-v '* || "$* " == '--version '* ]] && version | cut -dv -f2 && exit 0
+	[[ "$* " == '-n '* || "$* " == '--new '* ]] && wizard "$@" && exit 0
+	[[ "$* " == '-e '* || "$* " == '--edit '* ]] && \
 		cd-to-nearest-file runfile && edit-file-smartcase runfile "$@" && exit 0
-	[[ " $* " == *' --makefile-edit '* ]] && \
-		cd-to-nearest-file makefile && edit-file-smartcase makefile "$@" && exit 0
 
-	# --runfile-aliases · Print current Runfile aliases, or exit with error if not found.
-	[[ " $* " == *' --runfile-aliases '* ]] && \
+	# --new-from-template · Create Runfile from template, then open in editor (optional).
+	[[ "$* " == '--new-from-template '* ]] && \
+		new-from-template "$@" && edit-file-smartcase runfile --confirm "$@" && exit 0
+
+	# -a, --alias · Print current Runfile aliases, or exit with error if not found.
+	[[ "$* " == '-a '* || "$* " == '--alias '* ]] && \
 		cd-to-nearest-file runfile && print-runfile-aliases "$@" && exit 0
-
 	# TODO EXPERIMENTAL, file handling needs implementation:
-	# --runfile-aliases-write
-	[[ " $* " == *' --runfile-aliases-write '* ]] && \
+	# -a, --alias FILENAME · Attempt to write/update aliases within shell config file.
+	[[ "$*" =~ ^(-a|--alias)[=[:space:]]([^[:space:]]+) ]] && \
 		perl -0777 -pe "s/# Runfile Aliases\n.*# END Runfile Aliases\n/$(
 			print-runfile-aliases "$@"
-		)\n/" ~/.aliases && exit 0
+		)\n/" "${BASH_REMATCH[2]}" && exit 0
 
 	# --runfile · Print current Runfile, or exit with error if not found.
-	[[ " $* " == *' --runfile '* ]] || \
-	[[ "$*" == '--runfile-compact' ]] && \
+	[[ "$* " == '-r '* || "$* " == '--runfile '* ]] && \
 		cd-to-nearest-file runfile && print-file-smartcase runfile "$@" && exit 0
 
-	# --makefile-task-TASK · Print contents single task from nearest Makefile and exit.
-	[[ " $* " =~ [[:space:]]--makefile-task-([[:alnum:]_-]+)[[:space:]] ]] && \
-		RUNFILE_SKIP_SUBTASKS=1 run --make-dry-run "${BASH_REMATCH[1]}" && exit 0
+	# --makefile TASK · Print contents single task from nearest Makefile and exit.
+	[[ "$*" =~ ^(-m|--makefile)[=[:space:]]([^[:space:]]+) ]] && \
+		RUNFILE_SKIP_SUBTASKS=1 run --make-dry-run "${BASH_REMATCH[2]}" && exit 0
 
 	# If no Runfile in current dir, navigate up looking for one until we reach $HOME:
 	cd-to-nearest-file runfile
@@ -459,7 +472,9 @@ function run() ( set -euo pipefail
 
 	# @-prefix causes Make to execute tasks silently (without printing task code):
 	at="@"
-	[[ " $* " == *' --runfile-verbose '* || " $* " == *' --make-dry-run '* ]] && \
+	[[ " $* " == *' --verbose '* ]] || \
+	[[ "${RUNFILE_VERBOSE:-}" =~ ^(1|true|TRUE|True)$ ]] || \
+	[[ " $* " == *' --make-dry-run '* ]] && \
 		at="" # Remove @-prefix so that Make prints task code before executing tasks.
 
 	# Separate arguments into categories:
@@ -475,18 +490,18 @@ function run() ( set -euo pipefail
 		elif [[ "${arg}" =~ ^[[:alnum:]_-]+\= ]]
 		then
 			named_args+=( "${arg}" )
-		elif [[ "${arg}" != '--runfile-'* && "${arg}" != '--makefile-'* ]]
-		then
+		else
 			if [[ -z "${task}" ]]
 			then
 				task="${arg}"
 			else
-				if [[ " $* " == *' --makefile-compat '* ]]
+				if [[ " $* " == *' --compat '* ]] \
+				|| [[ "${RUNFILE_COMPAT:-}" =~ ^(1|true|TRUE|True)$ ]]
 				then
-					echo "Warning · Task '${task}' was run in Make-compatibility mode while being"
-					echo "        · passed positional argument '${arg}' incompatible with Make."
-					echo "        · Use a named argument instead ('run ${task} argname=${arg}') where"
-					echo "        · argname corresponds with '\$(argname)' in '${task}' in Runfile."
+					echo "$( bold 'Warning' ) · Task $( bold "${task}" ) was run in Make-compatibility mode while being"
+					echo "        · passed positional argument $( bold "${arg}" ) incompatible with Make."
+					echo "        · Use a named argument instead ($( bold "run ${task} argname=${arg}" )) where"
+					echo "        · argname corresponds with $( bold "\$(argname)" ) in $( bold "${task}" ) in Runfile."
 					echo
 				fi
 				pos_args+=( "${arg}" )
@@ -494,25 +509,26 @@ function run() ( set -euo pipefail
 		fi
 	done
 
-	# If --runfile-verbose specified, use modified patterns for Makefile .tasks list so
+	# If --verbose specified, use modified patterns for Makefile .tasks list so
 	# that when each task is printed, its commands are printed line-by-line underneath:
-	if [[ " $* " == *' --runfile-verbose '* ]]
+	if [[ " $* " == *' --verbose '* ]] \
+	|| [[ "${RUNFILE_VERBOSE:-}" =~ ^(1|true|TRUE|True)$ ]]
 	then
 		vbse_re_1='\\s+|'
 		vbse_re_2='s/^([^[:space:]])/\\n\\1/g'
 	fi
 
 task_re='([[:alnum:]_-][[:alnum:][:space:]_-]+):([[:alnum:][:space:]_-]+)?#'
-trap_re='^\s*(EXIT|HUP|INT|QUIT|ABRT|KILL|ALRM|TERM)'
+trap_re='(EXIT|HUP|INT|QUIT|ABRT|KILL|ALRM|TERM)'
 
 if [[ "${RUNFILE_TRAP:-}" == '*' ]]
 then
-	runfile_grep_filter_args=( -E "^(${task_re}|${trap_re})" )
+	runfile_grep_filter_args=( -E "^(${task_re}|\\s*${trap_re})" )
 elif [[ -n "${RUNFILE_TRAP:-}" ]]
 then
 	runfile_grep_filter_args=( -E "^(${task_re}|\\s+${RUNFILE_TRAP})" )
 else
-	runfile_grep_filter_args=( -Ev "${trap_re}" )
+	runfile_grep_filter_args=( -Ev "^\s*${trap_re}" )
 fi
 
 if [[ -n "${RUNFILE_SKIP_SUBTASKS:-}" ]]
@@ -548,12 +564,11 @@ EOF
 # ::::::::::::::::::::::::::::::::::::::::::
 
 	# Process interpolated args within generated Makefile: $(arg) $(@) $(1) $(2) etc.
-	if [[ " $* " != *' --makefile-compat '* ]] && \
+	if [[ " $* " != *' --compat '* ]] && \
+		! [[ "${RUNFILE_COMPAT:-}" =~ ^(1|true|TRUE|True)$ ]] && \
 		# If running in Make compatibility mode, skip this section.
 		[[ " $* " != *' --makefile '* ]] && \
-		[[ " $* " != *' --makefile-create '* ]] && \
-		[[ " $* " != *' --makefile-write '* ]] && \
-		[[ " $* " != *' --makefile-overwrite '* ]]
+		[[ " $* " != *' --eject '* ]]
 		# If outputting Makefile, skip this section.
 	then
 		buffer="$(
@@ -586,38 +601,35 @@ EOF
 		echo "${buffer}" > "${makefile}"
 	fi
 
-	# --makefile-create    · Write generated Makefile, then open in editor (optional).
-	# --makefile-write     · Alias for --makefile-create.
-	# --makefile-overwrite · Can be used to overwrite when Makefile already exists.
-	if [[ " $* " == *' --makefile-create '* ]] || \
-		[[ " $* " == *' --makefile-write '* ]] || \
-		[[ " $* " == *' --makefile-overwrite '* ]]
+	# --eject · Write generated Makefile, then open in editor (optional).
+	if [[ "$* " == '--eject '* || "$* " == '--eject-overwrite '* ]]
 	then
-		if [[ " $* " != *' --makefile-overwrite '* ]] \
+		if [[ "$* " != '--eject-overwrite '* ]] \
 		&& [[ -e 'Makefile' && ! -d 'Makefile' ]]
 		then
 			echo 'Makefile already exists. To overwrite, use:'
-			echo 'make --makefile-overwrite'
+			bold 'run --eject-overwrite'
+			echo
 			rm "${makefile}"
 			exit 1
 		else
 			if grep -qE '\$\([@0-9]\)' "${makefile}"
 			then
-				echo "Warning · Your runfile uses positional args \$(@) \$(1) \$(2) etc."
+				echo "$( bold 'Warning' ) · Your runfile uses positional args $( bold "\$(@) \$(1) \$(2)" ) etc."
 				echo "        · which aren't compatible with Make. You should update these"
 				echo "        · commands to accept standard Make-style named arguments:"
-				echo "        · \$(abc) in your Makefile, passed as: $ make task abc=xyz"
+				echo "        · $( bold "\$(abc)" ) in your Makefile, passed as: $( bold 'make task abc=xyz' )"
 				echo
 			fi
 			print-makefile "${makefile}" > ./Makefile
 			rm "${makefile}"
-			edit-file-smartcase makefile --runfile-confirm
+			edit-file-smartcase makefile --confirm
 			exit 0
 		fi
 	fi
 
 	# --makefile · Print generated Makefile then exit:
-	if [[ " $* " == *' --makefile '* ]]
+	if [[ "$* " == '-m '* || "$* " == '--makefile '* ]]
 	then
 		print-makefile "${makefile}"
 		rm "${makefile}"
@@ -634,16 +646,20 @@ EOF
 		if [[ -z "${RUNFILE_TRAP:-}" ]]
 		then
 			for trap_sig in $(
-				RUNFILE_TRAP='*' run "--makefile-task-${task}" \
+				RUNFILE_TRAP='*' run --makefile "${task}" \
 				| cut -d' ' -f1  | grep -vE '^make(\[\d+\])?\:' | xargs
 			)
 			do
-				# shellcheck disable=SC2064
-				# "Use single quotes, otherwise this expands now rather than when signalled."
-				# We want this to expand now rather than when the trap is triggered.
-				trap \
-				"RUNFILE_SKIP_SUBTASKS=1 RUNFILE_TRAP=${trap_sig} run ${task} ${make_args[*]}" \
-				"${trap_sig}"
+				# First ensure trap_sig is valid:
+				if [[ "${trap_sig}" =~ ^${trap_re}$ ]]
+				then
+					# shellcheck disable=SC2064
+					# "Use single quotes, otherwise this expands now rather than when signalled."
+					# We want this to expand now rather than when the trap is triggered.
+					trap \
+					"RUNFILE_SKIP_SUBTASKS=1 RUNFILE_TRAP=${trap_sig} run ${task} ${make_args[*]}" \
+					"${trap_sig}"
+				fi
 			done
 		elif [[ "${RUNFILE_TRAP}" != '*' ]]
 		then
