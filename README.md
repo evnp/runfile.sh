@@ -1,9 +1,9 @@
 runfile.sh
 ----------
 ```
-      · Language-agnostic project task runner · Missing companion of the ubiquitous Make ·
-      · Use a Runfile on its own to manage project tasks · start, build, test, lint, etc ·
-      · Use Runfile & Makefile in tandem to keep project tasks and build steps organized ·
+      · Language-agnostic project task runner · The venerable Make's missing companion ·
+      · Use Runfile by itself to manage your project tasks · start build test lint etc ·
+      · Use Runfile & Makefile in tandem to keep project tasks + build steps organized ·
 ```
 
 [![tests](https://github.com/evnp/runfile.sh/workflows/tests/badge.svg)](https://github.com/evnp/runfile.sh/actions)
@@ -47,46 +47,46 @@ Runfiles can be thought of as filling a similar role to these other excellent pr
 Usage
 -----
 ```sh
-$ run --runfile-help
+$ run --help
 
-· Usage · run ····················· Print list of all available tasks.
-          run [options] [task] ···· Run a task (ignored if action is specified).
-          run [options] [action] ·· Run a Runfile/Makefile action.
+· Usage · run ··················· Print list of all available tasks.
+          run [task] ············ Run a task.
+          run [task] [options] ·· Run a task with options available to task code.
 
-# ./Runfile syntax  (this is a comment!)
-taskabc: # task description
+          run --[help|version|runfile|makefile|edit|new|alias] [options]
+          run -[h|v|r|m|e|n|a] ·· Actions for managing Runfiles; details below.
+
+# ./Runfile -- syntax primer (this line is a comment!)
+taskabc: # Task description.
   shell command(s) for task abc
-taskxyz: taskabc # task description, taskxyz runs taskabc first just like Make would
+taskxyz: taskabc # Task description, taskxyz runs taskabc first just like Make would.
   shell command(s) for task xyz
-#^ whitespace doesn't matter; tabs, spaces, blank lines are all ok, or may be omitted
+#^ Unlike Make, whitespace doesn't matter; tabs, spaces, extra blank lines are all ok.
 
-· Actions ·
+-h --help ··········· Print this usage documentation then exit.
+-v --version ········ Print current runfile.sh version then exit.
+-r --runfile ········ Print contents of nearest Runfile (in current dir or dir above).
+-m --makefile ······· Print contents of Makefile generated from nearest Runfile.
+-m --makefile TASK ·· Print contents of single task from generated Makefile.
+-e --edit ··········· Open nearest Runfile with \$EDITOR.
+-n --new ············ Interactively create new Runfile in current dir.
+-a --alias ·········· Show command aliases for nearest Runfile (for shell config).
+-a --alias FILENAME · Attempt to write/update aliases within shell config file.
+--eject ············· Generate Makefile from Runfile and write to current dir.
 
--h --help --usage ····· Print this usage documentation then exit.
--v --version ·········· Print current runfile.sh version then exit.
---runfile ············· Print contents of nearest Runfile (in current dir or dir above).
---makefile ············ Print contents of Makefile generated from nearest Runfile.
---runfile-edit ········ Open nearest Runfile with \$EDITOR.
---makefile-edit ······· Open nearest Makefile with \$EDITOR.
---runfile-create ······ Write template Runfile in current dir.
---makefile-create ····· Write generated Makefile in current dir.
---runfile-overwrite ··· Overwrite existing Runfile with template Runfile.
---makefile-overwrite ·· Overwrite existing Makefile with generated Makefile.
---runfile-aliases ····· Print command aliases for nearest Runfile (for shell config).
+--verbose ··········· Print code line-by-line to terminal during task execution.
+--compact ··········· Use "compact" formatting for Runfile when creating or printing.
+--compat ············ Disable all features not compatible with Make.
+--confirm ··········· Always ask for confirmation before opening files with \$EDITOR.
+--noconfirm ········· Never ask for confirmation before opening files with \$EDITOR.
+--noedit ············ Never open files with \$EDITOR.
+RUNFILE_VERBOSE=1 RUNFILE_COMPACT=1   RUNFILE_COMPAT=1 ·  All options may also be  ·
+RUNFILE_CONFIRM=1 RUNFILE_NOCONFIRM=1 RUNFILE_NOEDIT=1 · provided as env variables ·
 
-· Options ·
-
---runfile-compact ···· Use "compact" formatting for Runfile when creating or printing.
---runfile-confirm ···· Always ask for confirmation before opening files with $EDITOR.
---runfile-noconfirm ·· Never ask for confirmation before opening files with $EDITOR.
---runfile-noedit ····· Never open files with $EDITOR.
---runfile-verbose ···· Print code line-by-line to terminal during task execution.
---makefile-compat ···· Disable all features not compatible with Make.
-
---make-dry-run ·· Don't execute task code, just print line-by-line to terminal instead.
---make-* ········ Pass any argument directly to they underlying Make command
-                · by prefixing the intended Make argument with "--make-".
-                · For example, --make-dry-run will pass --dry-run to Make.
+--make-dry-run ······ Don't execute task code, just print line-by-line to terminal.
+--make-ARGUMENT ····· Pass any argument directly to they underlying Make command
+                    · by prefixing the intended Make argument with "--make-".
+                    · For example, --make-dry-run will pass --dry-run to Make.
 ```
 
 Install
