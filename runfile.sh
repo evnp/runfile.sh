@@ -567,7 +567,7 @@ EOF
 	if [[ " $* " != *' --compat '* ]] && \
 		! [[ "${RUNFILE_COMPAT:-}" =~ ^(1|true|TRUE|True)$ ]] && \
 		# If running in Make compatibility mode, skip this section.
-		[[ " $* " != *' --makefile '* ]] && \
+		[[ " $* " != *' --makefile '* && " $* " != *' -m '* ]] && \
 		[[ " $* " != *' --eject '* ]]
 		# If outputting Makefile, skip this section.
 	then

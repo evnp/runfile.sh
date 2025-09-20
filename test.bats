@@ -33,77 +33,65 @@ EOF
 	assert_success
 }
 
-@test "${BATS_TEST_NUMBER} run -v" {
+function test_version() {
 	execute_test_command
 	assert_output --regexp "^[0-9]+\.[0-9]+\.[0-9]$"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} run -v" { test_version; }
+@test "${BATS_TEST_NUMBER} run --version" { test_version; }
 
-@test "${BATS_TEST_NUMBER} run --version" {
-	execute_test_command
-	assert_output --regexp "^[0-9]+\.[0-9]+\.[0-9]$"
-	assert_success
-}
-
-@test "${BATS_TEST_NUMBER} run -h" {
+function test_help() {
 	execute_test_command
 	assert_output -p "runfile.sh"
 	assert_output --regexp "[0-9]+\.[0-9]+\.[0-9]"
 	assert_output -p "Usage"
-	assert_output -p "Actions"
-	assert_output -p "Options"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} run --help" { test_help; }
+@test "${BATS_TEST_NUMBER} run -h" { test_help; }
 
-@test "${BATS_TEST_NUMBER} run --help" {
-	execute_test_command
-	assert_output -p "runfile.sh"
-	assert_output --regexp "[0-9]+\.[0-9]+\.[0-9]"
-	assert_output -p "Usage"
-	assert_output -p "Actions"
-	assert_output -p "Options"
-	assert_success
-}
-
-@test "${BATS_TEST_NUMBER} run --usage" {
-	execute_test_command
-	assert_output -p "runfile.sh"
-	assert_output --regexp "[0-9]+\.[0-9]+\.[0-9]"
-	assert_output -p "Usage"
-	assert_output -p "Actions"
-	assert_output -p "Options"
-	assert_success
-}
-
-@test "${BATS_TEST_NUMBER} run --runfile" {
+function test_runfile() {
 	execute_test_command
 	assert_output "$( cat ./Runfile )"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} run --runfile" { test_runfile; }
+@test "${BATS_TEST_NUMBER} run -r" { test_runfile; }
 
-@test "${BATS_TEST_NUMBER} run --runfile --runfile-compact" {
-	execute_test_command
-	assert_output "$( cat ./Runfile | sed -e '/^$/d' -e 's/^[[:space:]]//' )"
-	assert_success
-} # shortcut for above:
-@test "${BATS_TEST_NUMBER} run --runfile-compact" {
+function test_runfile_compact() {
 	execute_test_command
 	assert_output "$( cat ./Runfile | sed -e '/^$/d' -e 's/^[[:space:]]//' )"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} run --runfile --compact" { test_runfile_compact; }
+@test "${BATS_TEST_NUMBER} run -r --compact" { test_runfile_compact; }
 
-@test "${BATS_TEST_NUMBER} run --makefile" {
-	execute_test_command
-	assert_output "$( cat ./Makefile )"
-	assert_success
-} # same as above; --runfile-compact should have no effect:
-@test "${BATS_TEST_NUMBER} run --makefile --runfile-compact" {
+function test_makefile() {
 	execute_test_command
 	assert_output "$( cat ./Makefile )"
 	assert_success
 }
+@test "${BATS_TEST_NUMBER} run --makefile" { test_makefile; }
+@test "${BATS_TEST_NUMBER} run -m" { test_makefile; }
 
-@test "${BATS_TEST_NUMBER} run --runfile-aliases" {
+function test_makefile_task_start() {
+	execute_test_command
+	assert_output -p "$( cat ./Makefile | grep "@" | head -4 | sed 's/^.*@//' )"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} run --makefile start" { test_makefile_task_start; }
+@test "${BATS_TEST_NUMBER} run -m start" { test_makefile_task_start; }
+
+function test_makefile_task_stop() {
+	execute_test_command
+	assert_output -p "$( cat ./Makefile | grep "@" | head -5 | tail -1 | sed 's/^.*@//' )"
+	assert_success
+}
+@test "${BATS_TEST_NUMBER} run --makefile stop" { test_makefile_task_stop; }
+@test "${BATS_TEST_NUMBER} run -m stop" { test_makefile_task_stop; }
+
+@test "${BATS_TEST_NUMBER} run --alias" {
 	execute_test_command
 	assert_output "$( cat <<-EOF
 		# Runfile Aliases
