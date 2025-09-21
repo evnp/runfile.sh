@@ -2,8 +2,6 @@
 
 # runfile.sh · v0.0.3
 
-trap "" SIGTSTP
-
 function bold() {
 	echo "$( tput bold )$*$( tput sgr0 )"
 }
@@ -408,6 +406,7 @@ function run() ( set -euo pipefail
 	local makefile='' buffer='' at='' task=''
 	local arg='' make_args=() named_args=() pos_args=() pos_arg_idx=0
 
+	local runfile_variables='' runfile_variable_re=''
 	local task_re='' trap_re='' vbse_re_1='' vbse_re_2=''
 	local trap_sig='' runfile_grep_filter_args=()
 
@@ -518,40 +517,55 @@ function run() ( set -euo pipefail
 		vbse_re_2='s/^([^[:space:]])/\\n\\1/g'
 	fi
 
-task_re='([[:alnum:]_-][[:alnum:][:space:]_-]+):([[:alnum:][:space:]_-]+)?#'
-trap_re='(EXIT|HUP|INT|QUIT|ABRT|KILL|ALRM|TERM)'
+	task_re='([[:alnum:]_-][[:alnum:][:space:]_-]+):([[:alnum:][:space:]_-]+)?#'
+	trap_re='(EXIT|HUP|INT|QUIT|ABRT|KILL|ALRM|TERM)'
 
-if [[ "${RUNFILE_TRAP:-}" == '*' ]]
-then
-	runfile_grep_filter_args=( -E "^(${task_re}|\\s*${trap_re})" )
-elif [[ -n "${RUNFILE_TRAP:-}" ]]
-then
-	runfile_grep_filter_args=( -E "^(${task_re}|\\s+${RUNFILE_TRAP})" )
-else
-	runfile_grep_filter_args=( -Ev "^\s*${trap_re}" )
-fi
+	if [[ "${RUNFILE_TRAP:-}" == '*' ]]
+	then
+		runfile_grep_filter_args=( -E "^(${task_re}|\\s*${trap_re})" )
+	elif [[ -n "${RUNFILE_TRAP:-}" ]]
+	then
+		runfile_grep_filter_args=( -E "^(${task_re}|\\s+${RUNFILE_TRAP})" )
+	else
+		runfile_grep_filter_args=( -Ev "^\s*${trap_re}" )
+	fi
 
-if [[ -n "${RUNFILE_SKIP_SUBTASKS:-}" ]]
-then
-	subtask_re=''
-else
-	subtask_re='\2'
-fi
+	if [[ -n "${RUNFILE_SKIP_SUBTASKS:-}" ]]
+	then
+		subtask_re=''
+	else
+		subtask_re='\2'
+	fi
+
+	runfile_variable_re="^[[:space:]]*[A-Z]+ :*= "
+	runfile_variables="$( \
+		grep -E "${runfile_variable_re}" "$( smartcase-file runfile )" || true
+	)"
+	if [[ -n "${runfile_variables}" ]]
+	then
+		runfile_variables="${runfile_variables}"$'\n\n'
+	fi
 
 # ::::::::::::::::::::::::::::::::::::::::::
 # Construct temporary Makefile from Runfile:
+# Note: <<-EOF doesn't produce correct indentation for final lines; <<EOF required.
 cat <<EOF> "${makefile}"
-.PHONY: _tasks
+${runfile_variables}.PHONY: _tasks
 _tasks: .tasks
 $(
-	grep "${runfile_grep_filter_args[@]}" < "$( smartcase-file runfile )" \
+	grep "${runfile_grep_filter_args[@]}" "$( smartcase-file runfile )" \
+	| grep -Ev "${runfile_variable_re}" \
 	| sed -E \
 			-e 's/[[:space:]]*$//' \
 				`# trim any trailing whitespace from lines` \
 			-e "s!^[[:space:]]*([^[:space:]])!\t${at}\1!" \
-				`# prefix every non-blank line with TAB (or TAB-@, if verbose)` \
+				`# prefix every non-blank line with TAB-@ (or just TAB, if verbose)` \
 			-e "s!^\t${at}${task_re}(.*)\$!\n.PHONY: \1\n\1:${subtask_re}\#\3!" \
 				`# remove TAB (or TAB-@) prefix from lines that match task pattern` \
+			-e "s!^\t${at}((then|do|else|elif|\||&&|\|\|)[[:space:]]+.*|fi|done)\$!\t\1!" \
+				`# remove TAB (or TAB-@) prefix from bash-keyword lines` \
+			-e "s!^\t(@?)(if|for|while|then|do|else|elif)[[:space:]](.*)\$!\t\1\2 \3; \\\\!" \
+				`# automatically add backslashes to multiline statements` \
 	| cat -s
 )
 
@@ -560,6 +574,7 @@ $(
 	@grep -E "^(${vbse_re_1}${task_re})" \$(MAKEFILE_LIST) \\
 	| sed -Ee "${vbse_re_2:-s/^/  /}" -e 's/[[:space:]]*:[[:alnum:] _-]*#[[:space:]]*/ · /'
 EOF
+
 # Done with temporary Makefile construction.
 # ::::::::::::::::::::::::::::::::::::::::::
 

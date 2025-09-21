@@ -1,14 +1,15 @@
 #!/usr/bin/env bash
 
-load './node_modules/bats-support/load'
-load './node_modules/bats-assert/load'
+load '../node_modules/bats-support/load'
+load '../node_modules/bats-assert/load'
 
 function execute_test_command() {
+	cd ./tests
 	local cmd
 	cmd="${BATS_TEST_DESCRIPTION}"
 	cmd="${cmd/${BATS_TEST_NUMBER} /}"
 	cmd="${cmd/README /}"
-	cmd="${cmd/run/${BATS_TEST_DIRNAME}/runfile.sh}"
+	cmd="${cmd/run/${BATS_TEST_DIRNAME}/..\/runfile.sh}"
 	if [[ "${cmd}" =~ ^([A-Z_]+=[^ ]*) ]]; then
 		# handle env var declarations placed before test command
 		export "${BASH_REMATCH[1]}"
@@ -18,7 +19,7 @@ function execute_test_command() {
 	fi
 }
 
-task_list="$( cat <<EOF
+task_list="$( cat <<-EOF
   start · start app
   stop · stop app
   build · build app for environment [vars: env]

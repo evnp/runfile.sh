@@ -1,21 +1,37 @@
-start: stop # start app
-	run build env=dev # tasks can be run directly from other tasks
-	echo "starting app in 3 seconds"
-	loading
-	sleep 3
-	EXIT loading --fin
-	INT loading --fin
+BIN = ./node_modules/.bin
 
-stop: # stop app
-	HUP loading --fin
-	echo "stopping app"
+lint: # lint
+	$(BIN)/shellcheck runfile.sh
 
-build: lint # build app for environment [vars: env]
-	[[ -n $(env) ]] && echo "buiding app for $(env)" || echo "error: missing env"
+man: # generate/update man page from README
+	sed '1,/^Usage$$/d' README.md \
+	| sed '1s/^/DESCRIPTION\\nBasic usage:\n/' \
+	| $(BIN)/marked-man --name=runfile.sh \
+	| sed -E 's/^(..Brunfile.sh)/\1 – Language-agnostic project task runner built on the ubiquitous Make./' \
+	| tr '\n' '\r' \
+	| sed -E 's/\([^\)]*\)//g' \
+	| tr '\r' '\n' > ./man/run.1
 
-test: # run all tests or specific tests [vars: name1, name2, etc.]
-	run build env=test
-	[[ -n $(@) ]] && echo "running tests $(@)" || echo "running all tests"
+release: # publish a new release (with confirmation)
+	npm pack && tar -xvzf *.tgz && rm -rf package *.tgz \
+	&& echo $'\n'\"Press ENTER to publish the files above · CTRL+C to cancel · node $( node -v ) · npm $( npm -v )\"$'\n\n' \
+	&& head -n 1 >/dev/null && npm publish
 
-lint: # lint all files or specific file [vars: file]
-	[[ -n $(1) ]] && echo "linting file $(1)" || echo "linting all files"
+releasenext: # publish a new pre-release (with confirmation)
+	npm pack && tar -xvzf *.tgz && rm -rf package *.tgz \
+	&& echo $'\n'\"Press ENTER to publish the files above (tag=next) · CTRL+C to cancel · node $( node -v ) · npm $( npm -v )\"$'\n\n' \
+	&& head -n 1 >/dev/null && npm publish --tag next
+
+test: # test
+	if [[ "$(@)" =~ ^[0-9]+$$ ]]
+	then run testi "$(@)"
+	elif [[ -n "$(@)" ]]
+	then run testf "$(@)"
+	else run lint && $(BIN)/bats --jobs 16 --no-parallelize-across-files tests/test.bats
+	fi
+
+testf: lint # test by substring
+	$(BIN)/bats -f "$(@)" tests/test.bats
+
+testi: lint # test by index
+	$(BIN)/bats -f "$$( grep @test ./tests/test.bats | head -$(1) | tail -1 | cut -d' ' -f3- | cut -d'"' -f1 )$$" ./tests/test.bats
