@@ -163,7 +163,7 @@ function print-file-smartcase() {
 }
 
 function print-makefile() {
-	sed -E "s!\t${at}make --makefile ${makefile} !\t${at}make !" "$@"
+	sed -E "s!\tmake --makefile ${makefile} !\tmake !" "$@"
 }
 
 function print-runfile-commands() {
@@ -403,7 +403,7 @@ function wizard() {
 }
 
 function run() ( set -euo pipefail
-	local makefile='' buffer='' at='' task=''
+	local makefile='' buffer='' task=''
 	local arg='' make_args=() named_args=() pos_args=() pos_arg_idx=0
 
 	local runfile_variables='' runfile_variable_re=''
@@ -468,13 +468,6 @@ function run() ( set -euo pipefail
 
 	# Temporary Makefile which we will pass to make:
 	makefile="$( mktemp )"
-
-	# @-prefix causes Make to execute tasks silently (without printing task code):
-	at="@"
-	[[ " $* " == *' --verbose '* ]] || \
-	[[ "${RUNFILE_VERBOSE:-}" =~ ^(1|true|TRUE|True)$ ]] || \
-	[[ " $* " == *' --make-dry-run '* ]] && \
-		at="" # Remove @-prefix so that Make prints task code before executing tasks.
 
 	# Separate arguments into categories:
 	# make_args  · Arguments that will be passed on to Make.
@@ -558,14 +551,14 @@ $(
 	| sed -E \
 			-e 's/[[:space:]]*$//' \
 				`# trim any trailing whitespace from lines` \
-			-e "s!^[[:space:]]*([^[:space:]])!\t${at}\1!" \
-				`# prefix every non-blank line with TAB-@ (or just TAB, if verbose)` \
-			-e "s!^\t${at}${task_re}(.*)\$!\n.PHONY: \1\n\1:${subtask_re}\#\3!" \
-				`# remove TAB (or TAB-@) prefix from lines that match task pattern` \
-			-e "s!^\t${at}((then|do|else|elif|\||&&|\|\|)[[:space:]]+.*|fi|done)\$!\t\1!" \
-				`# remove TAB (or TAB-@) prefix from bash-keyword lines` \
-			-e "s!^\t(@?)(if|for|while|then|do|else|elif)[[:space:]](.*)\$!\t\1\2 \3; \\\\!" \
-				`# automatically add backslashes to multiline statements` \
+			-e "s!^[[:space:]]*([^[:space:]])!\t\1!" \
+				`# prefix every non-blank line with TAB` \
+			-e "s!^\t${task_re}(.*)\$!\n.PHONY: \1\n\1:${subtask_re}\#\3!" \
+				`# remove TAB prefix from lines that match task pattern` \
+			-e "s!^\t(if|elif|then|else|for|while)[[:space:]](.*;.*)\$!\t\1 \2 \\\\!" \
+			-e "s!^\t(if|elif|then|else|for|while)[[:space:]]([^;]*)\$!\t\1 \2; \\\\!" \
+			-e "s!^\t(then|do|else|elif)\$!\t\1 \\\\!" \
+				`# automatically add backslashes to multiline statements (if, for, while)` \
 	| cat -s
 )
 
@@ -680,7 +673,7 @@ EOF
 		then
 			# If a specific runfile trap is being triggered, remove that trap's prefix
 			# (eg. EXIT) from lines in makefile so they can be executed normally:
-			buffer="$( sed -E "s!^\t${at}${RUNFILE_TRAP} !\t${at}!" "${makefile}" )"
+			buffer="$( sed -E "s!^\t${RUNFILE_TRAP} !\t!" "${makefile}" )"
 
 			# Write buffer back to temporary makefile:
 			echo "${buffer}" > "${makefile}"
@@ -692,7 +685,14 @@ EOF
 	fi
 
 	# Main Path · Invoke Make with generated Makefile and prepared arguments:
-	make --makefile "${makefile}" "${make_args[@]}"
+	if [[ " $* " == *' --verbose '* ]] \
+	|| [[ "${RUNFILE_VERBOSE:-}" =~ ^(1|true|TRUE|True)$ ]] \
+	|| [[ " $* " == *' --make-dry-run '* ]]
+	then
+		make --makefile "${makefile}" "${make_args[@]}"
+	else
+		make --silent --makefile "${makefile}" "${make_args[@]}"
+	fi
 
 	# Main Path · Clean up temporary Makefile and exit with success:
 	rm "${makefile}"

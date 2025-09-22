@@ -78,7 +78,7 @@ function test_makefile() {
 
 function test_makefile_task_start() {
 	execute_test_command
-	assert_output -p "$( cat ./Makefile | grep "@" | head -4 | sed 's/^.*@//' )"
+	assert_output -p "$( cat ./Makefile | grep '^\t' | head -4 | tr '\t' '' )"
 	assert_success
 }
 @test "${BATS_TEST_NUMBER} run --makefile start" { test_makefile_task_start; }
@@ -86,7 +86,7 @@ function test_makefile_task_start() {
 
 function test_makefile_task_stop() {
 	execute_test_command
-	assert_output -p "$( cat ./Makefile | grep "@" | head -5 | tail -1 | sed 's/^.*@//' )"
+	assert_output -p "$( cat ./Makefile | grep '^\t' | head -5 | tail -1 | tr '\t' '' )"
 	assert_success
 }
 @test "${BATS_TEST_NUMBER} run --makefile stop" { test_makefile_task_stop; }
