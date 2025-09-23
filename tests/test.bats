@@ -100,6 +100,7 @@ function test_makefile_task_stop() {
 		alias rb='run build'
 		alias rt='run test'
 		alias rl='run lint'
+		alias rc='run complex'
 		# END Runfile Aliases
 	EOF
 	)"

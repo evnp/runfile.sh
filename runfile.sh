@@ -403,7 +403,7 @@ function wizard() {
 }
 
 function run() ( set -euo pipefail
-	local makefile='' buffer='' task=''
+	local makefile='' buffer='' task='' baseindent=''
 	local arg='' make_args=() named_args=() pos_args=() pos_arg_idx=0
 
 	local runfile_variables='' runfile_variable_re=''
@@ -539,26 +539,48 @@ function run() ( set -euo pipefail
 		runfile_variables="${runfile_variables}"$'\n\n'
 	fi
 
+	baseindent="$( grep -Eo '^[[:space:]]+' "$( smartcase-file runfile )" | head -1 )"
+	if [[ -z "${baseindent}" ]]
+	then
+		baseindent='\t'
+	fi
+
 # ::::::::::::::::::::::::::::::::::::::::::
 # Construct temporary Makefile from Runfile:
 # Note: <<-EOF doesn't produce correct indentation for final lines; <<EOF required.
 cat <<EOF> "${makefile}"
+SHELL = bash
+
 ${runfile_variables}.PHONY: _tasks
 _tasks: .tasks
 $(
 	grep "${runfile_grep_filter_args[@]}" "$( smartcase-file runfile )" \
 	| grep -Ev "${runfile_variable_re}" \
 	| sed -E \
-			-e 's/[[:space:]]*$//' \
+			-e "s/[[:space:]]*\$//" \
 				`# trim any trailing whitespace from lines` \
-			-e "s!^[[:space:]]*([^[:space:]])!\t\1!" \
-				`# prefix every non-blank line with TAB` \
+			-e "s/^${baseindent}//" \
+				`# trim leading base indent from lines` \
+			-e "s/^[[:space:]]+/\t/" \
+				`# replace deeper indentation with TAB` \
+			-e "s!^!\t!" \
+				`# prefix every line with TAB` \
+			-e "s!^\t\$!!" \
+				`# remove TAB from blank lines` \
 			-e "s!^\t${task_re}(.*)\$!\n.PHONY: \1\n\1:${subtask_re}\#\3!" \
-				`# remove TAB prefix from lines that match task pattern` \
-			-e "s!^\t(if|elif|then|else|for|while)[[:space:]](.*;.*)\$!\t\1 \2 \\\\!" \
-			-e "s!^\t(if|elif|then|else|for|while)[[:space:]]([^;]*)\$!\t\1 \2; \\\\!" \
-			-e "s!^\t(then|do|else|elif)\$!\t\1 \\\\!" \
-				`# automatically add backslashes to multiline statements (if, for, while)` \
+				`# remove TAB-prefix from lines that match task pattern` \
+			`# Improve Make's default handling of multiline statements (if, for, while):` \
+			-e "s!^\t\t(.*;[[:space:]]*[^\\]?)\$!\t\t\1 \\\\!" \
+			-e "s!^\t\t(.*[^\\])\$!\t\t\1; \\\\!" \
+				`# add backslash and/or semicolon to deep-indented lines where missing` \
+		  -e "s!^\t(if|elif|for|while)[[:space:]]([^;]*;[[:space:]]*(then|do))\$!\t\1 \2 \\\\!" \
+				`# add backslash after "if ...; then" and "for ...; do" lines` \
+			-e "s!^\t(if|elif|then|else|for|while|do)[[:space:]](.*;)\$!\t\1 \2 \\\\!" \
+				`# add backslash after keyword lines that end with a semicolon` \
+			-e "s!^\t(if|elif|then|else|for|while|do)[[:space:]](.*[^;\\])\$!\t\1 \2; \\\\!" \
+				`# add semicolon and backslash after keyword lines NOT ending with semicolon` \
+			-e "s!^\t(then|else|do)\$!\t\1 \\\\!" \
+				`# add backslash after "then", "else", "do" when on their own line` \
 	| cat -s
 )
 

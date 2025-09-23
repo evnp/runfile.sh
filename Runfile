@@ -1,37 +1,44 @@
 BIN = ./node_modules/.bin
 
 lint: # lint
-	$(BIN)/shellcheck runfile.sh
+  $(BIN)/shellcheck runfile.sh
 
 man: # generate/update man page from README
-	sed '1,/^Usage$$/d' README.md \
-	| sed '1s/^/DESCRIPTION\\nBasic usage:\n/' \
-	| $(BIN)/marked-man --name=runfile.sh \
-	| sed -E 's/^(..Brunfile.sh)/\1 – Language-agnostic project task runner built on the ubiquitous Make./' \
-	| tr '\n' '\r' \
-	| sed -E 's/\([^\)]*\)//g' \
-	| tr '\r' '\n' > ./man/run.1
+  sed '1,/^Usage$$/d' README.md \
+  | sed '1s/^/DESCRIPTION\\nBasic usage:\n/' \
+  | $(BIN)/marked-man --name=runfile.sh \
+  | sed -E 's/^(..Brunfile.sh)/\1 – Language-agnostic project task runner built on the ubiquitous Make./' \
+  | tr '\n' '\r' \
+  | sed -E 's/\([^\)]*\)//g' \
+  | tr '\r' '\n' > ./man/run.1
 
 release: # publish a new release (with confirmation)
-	npm pack && tar -xvzf *.tgz && rm -rf package *.tgz \
-	&& echo $'\n'\"Press ENTER to publish the files above · CTRL+C to cancel · node $( node -v ) · npm $( npm -v )\"$'\n\n' \
-	&& head -n 1 >/dev/null && npm publish
+  npm pack && tar -xvzf *.tgz && rm -rf package *.tgz \
+  && echo $'\n'\"Press ENTER to publish the files above · CTRL+C to cancel · node $( node -v ) · npm $( npm -v )\"$'\n\n' \
+  && head -n 1 >/dev/null && npm publish
 
 releasenext: # publish a new pre-release (with confirmation)
-	npm pack && tar -xvzf *.tgz && rm -rf package *.tgz \
-	&& echo $'\n'\"Press ENTER to publish the files above (tag=next) · CTRL+C to cancel · node $( node -v ) · npm $( npm -v )\"$'\n\n' \
-	&& head -n 1 >/dev/null && npm publish --tag next
+  npm pack && tar -xvzf *.tgz && rm -rf package *.tgz \
+  && echo $'\n'\"Press ENTER to publish the files above (tag=next) · CTRL+C to cancel · node $( node -v ) · npm $( npm -v )\"$'\n\n' \
+  && head -n 1 >/dev/null && npm publish --tag next
 
 test: # test
-	if [[ "$(@)" =~ ^[0-9]+$$ ]]
-	then run testi "$(@)"
-	elif [[ -n "$(@)" ]]
-	then run testf "$(@)"
-	else run lint && $(BIN)/bats --jobs 16 --no-parallelize-across-files tests/test.bats
-	fi
+  if [[ "$(@)" =~ ^[0-9]+$$ ]]
+  then
+    run test-by-index "$(@)"
+  elif [[ -n "$(@)" ]]
+  then
+    run test-by-substring "$(@)"
+  else
+    run test-all
+  fi
 
-testf: lint # test by substring
-	$(BIN)/bats -f "$(@)" tests/test.bats
+test-all: lint # run all tests
+  $(BIN)/bats --jobs 16 --no-parallelize-across-files tests/test.bats
 
-testi: lint # test by index
-	$(BIN)/bats -f "$$( grep @test ./tests/test.bats | head -$(1) | tail -1 | cut -d' ' -f3- | cut -d'"' -f1 )$$" ./tests/test.bats
+test-by-index: lint # run test case at index
+  $(BIN)/bats -f "$$( grep @test ./tests/test.bats | head -$(1) | tail -1 | cut -d' ' -f3- | cut -d'"' -f1 )$$" ./tests/test.bats
+
+test-by-substring: lint # run test cases matching substring
+  $(BIN)/bats -f "$(@)" tests/test.bats
+
