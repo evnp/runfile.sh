@@ -34,11 +34,26 @@ test: # test
   fi
 
 test-all: lint # run all tests
-  $(BIN)/bats --jobs 16 --no-parallelize-across-files tests/test.bats
+  for runfile in tests/*/Runfile
+  do
+    echo -ne "$$( tput smul )$$( tput bold )$${runfile}$$( tput sgr0 ) -> "
+    TEST_RUNFILE="$${runfile}" \
+    $(BIN)/bats --jobs 16 --no-parallelize-across-files tests/test.bats
+  done
 
 test-by-index: lint # run test case at index
-  $(BIN)/bats -f "$$( grep @test ./tests/test.bats | head -$(1) | tail -1 | cut -d' ' -f3- | cut -d'"' -f1 )$$" ./tests/test.bats
+  for runfile in tests/*/Runfile
+  do
+    echo -ne "$$( tput smul )$$( tput bold )$${runfile}$$( tput sgr0 ) -> "
+    TEST_RUNFILE="$${runfile}" \
+    $(BIN)/bats -f "$$( grep @test ./tests/test.bats | head -$(1) | tail -1 | cut -d' ' -f3- | cut -d'"' -f1 )$$" ./tests/test.bats
+  done
 
 test-by-substring: lint # run test cases matching substring
-  $(BIN)/bats -f "$(@)" tests/test.bats
+  for runfile in tests/*/Runfile
+  do
+    echo -ne "$$( tput smul )$$( tput bold )$${runfile}$$( tput sgr0 ) -> "
+    TEST_RUNFILE="$${runfile}" \
+    $(BIN)/bats -f "$(@)" tests/test.bats
+  done
 

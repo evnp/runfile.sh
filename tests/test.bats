@@ -3,13 +3,20 @@
 load '../node_modules/bats-support/load'
 load '../node_modules/bats-assert/load'
 
-function execute_test_command() {
-  cd ./tests
-  local cmd
+function execute_test_command() { local cmd
+  if [[ -z "${TEST_RUNFILE}" ]]
+  then
+    echo "TEST_RUNFILE must be set."
+    exit 1
+  fi
+
+  cd $( dirname "${TEST_RUNFILE}" )
+
   cmd="${BATS_TEST_DESCRIPTION}"
   cmd="${cmd/${BATS_TEST_NUMBER} /}"
   cmd="${cmd/README /}"
   cmd="${cmd/run/${BATS_TEST_DIRNAME}/..\/runfile.sh}"
+
   if [[ "${cmd}" =~ ^([A-Z_]+=[^ ]*) ]]; then
     # handle env var declarations placed before test command
     export "${BASH_REMATCH[1]}"
