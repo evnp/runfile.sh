@@ -1,14 +1,21 @@
 start: stop # start app
   run build env=dev # tasks can be run directly from other tasks
-  echo "starting app in 3 seconds"
-  loading
-  sleep 3
-  EXIT loading --fin # prefixing command with signal registers a trap
-  INT loading --fin
+  echo "starting app"
+  run loading
+  EXIT run loading --fin # prefixing command with signal registers a trap
+  INT run loading --fin
 
 stop: # stop app
-  HUP loading --fin
+  HUP run loading --fin
   echo "stopping app"
+
+loading: # show loading state
+  if [[ $(@) == '--fin' ]]
+  then
+    echo "loading finished"
+  else
+    echo "loading started"
+  fi
 
 build: lint # build app for environment [vars: env]
   [[ -n $(env) ]] && echo "buiding app for $(env)" || echo "error: missing env"
@@ -25,17 +32,17 @@ complex: # a sample command exploring complex multiline syntax
 
   for x in abc hjkl xyz
   do
-    echo -n "$${x} :: "
+    echo -n " $${x} ::"
   done
   echo
 
   for x in abc hjkl xyz; do
-    echo -n "$${x} :: "
+    echo -n " $${x} ::"
   done
   echo
 
   for x in abc hjkl xyz
-  do echo -n "$${x} :: "
+  do echo -n " $${x} ::"
   done
   echo
 
@@ -43,17 +50,17 @@ complex: # a sample command exploring complex multiline syntax
 
   while read x
   do
-    echo -n "$${x} :: "
+    echo -n " $${x} ::"
   done <<< $$'abc\n hjkl\n xyz'
   echo
 
   while read x; do
-    echo -n "$${x} :: "
+    echo -n " $${x} ::"
   done <<< $$'abc\n hjkl\n xyz'
   echo
 
   while read x
-  do echo -n "$${x} :: "
+  do echo -n " $${x} ::"
   done <<< $$'abc\n hjkl\n xyz'
   echo
 
@@ -62,35 +69,35 @@ complex: # a sample command exploring complex multiline syntax
   x=''
   if [[ -z "$${x}" ]]
   then
-    echo -n "abc"
-    echo -n " :: "
+    echo -n " abc"
+    echo -n " ::"
   elif [[ "$${x}" =~ a[Bb][a-z]$$ ]]
   then
-    echo -n "hjkl"
-    echo -n " :: "
+    echo -n " hjkl"
+    echo -n " ::"
   else
-    echo -n "xyz"
-    echo -n " :: "
+    echo -n " xyz"
+    echo -n " ::"
   fi
 
   y=''
   if [[ -n "$${y}" ]]; then
-    echo -n "abc"
-    echo -n " :: "
+    echo -n " abc"
+    echo -n " ::"
   elif ! [[ "$${y}" =~ a[Bb][a-z]$$ ]]; then
-    echo -n "hjkl"
-    echo -n " :: "
+    echo -n " hjkl"
+    echo -n " ::"
   else
-    echo -n "xyz"
-    echo -n " :: "
+    echo -n " xyz"
+    echo -n "  ::"
   fi
 
   z=''
   if [[ -z "$${x}" ]]
-  then x='abc'; echo -n "$${x} :: "
+  then x='abc'; echo -n " $${x} ::"
   elif [[ x =~ a[Bb][a-z]$$ ]]
-  then x='hjkl'; echo -n "$${x} :: "
-  else echo -n "$${x} :: "
+  then x='hjkl'; echo -n " $${x} ::"
+  else echo -n " $${x} ::"
   fi
   echo
 
@@ -98,17 +105,17 @@ complex: # a sample command exploring complex multiline syntax
 
   for x in abc hjkl xyz;
   do
-    echo -n "$${x} :: ";
+    echo -n " $${x} ::";
   done
   echo
 
   for x in abc hjkl xyz; do
-    echo -n "$${x} :: ";
+    echo -n " $${x} ::";
   done
   echo
 
   for x in abc hjkl xyz;
-  do echo -n "$${x} :: ";
+  do echo -n " $${x} ::";
   done
   echo
 
@@ -116,17 +123,17 @@ complex: # a sample command exploring complex multiline syntax
 
   while read x;
   do
-    echo -n "$${x} :: ";
+    echo -n " $${x} ::";
   done <<< $$'abc\n hjkl\n xyz';
   echo
 
   while read x; do
-    echo -n "$${x} :: ";
+    echo -n " $${x} ::";
   done <<< $$'abc\n hjkl\n xyz';
   echo
 
   while read x;
-  do echo -n "$${x} :: ";
+  do echo -n " $${x} ::";
   done <<< $$'abc\n hjkl\n xyz';
   echo
 
@@ -135,35 +142,35 @@ complex: # a sample command exploring complex multiline syntax
   x=''
   if [[ -z "$${x}" ]];
   then
-    echo -n "abc";
-    echo -n " :: ";
+    echo -n " abc";
+    echo -n " ::";
   elif [[ "$${x}" =~ a[Bb][a-z]$$ ]];
   then
-    echo -n "hjkl";
-    echo -n " :: ";
+    echo -n " hjkl";
+    echo -n " ::";
   else
-    echo -n "xyz";
-    echo -n " :: ";
+    echo -n " xyz";
+    echo -n " ::";
   fi
 
   y=''
   if [[ -n "$${y}" ]]; then
-    echo -n "abc";
-    echo -n " :: ";
+    echo -n " abc";
+    echo -n " ::";
   elif ! [[ "$${y}" =~ a[Bb][a-z]$$ ]]; then
-    echo -n "hjkl";
-    echo -n " :: ";
+    echo -n " hjkl";
+    echo -n " ::";
   else
-    echo -n "xyz";
-    echo -n " :: ";
+    echo -n " xyz";
+    echo -n " ::";
   fi
 
   z=''
   if [[ -z "$${x}" ]];
-  then x='abc'; echo -n "$${x} :: ";
+  then x='abc'; echo -n " $${x} ::";
   elif [[ x =~ a[Bb][a-z]$$ ]];
-  then x='hjkl'; echo -n "$${x} :: ";
-  else echo -n "$${x} :: ";
+  then x='hjkl'; echo -n " $${x} ::";
+  else echo -n " $${x} ::";
   fi
 
 

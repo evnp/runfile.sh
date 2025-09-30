@@ -1,4 +1,4 @@
-SHELL = bash
+SHELL = /bin/bash
 
 .PHONY: _tasks
 _tasks: .tasks
@@ -6,13 +6,21 @@ _tasks: .tasks
 .PHONY: start
 start: stop # start app
 	run build env=dev # tasks can be run directly from other tasks
-	echo "starting app in 3 seconds"
-	loading
-	sleep 3
+	echo "starting app"
+	run loading
 
 .PHONY: stop
 stop: # stop app
 	echo "stopping app"
+
+.PHONY: loading
+loading: # show loading state
+	if [[ $(@) == '--fin' ]]; \
+	then \
+		echo "loading finished"; \
+	else \
+		echo "loading started"; \
+	fi
 
 .PHONY: build
 build: lint # build app for environment [vars: env]
@@ -33,17 +41,17 @@ complex: # a sample command exploring complex multiline syntax
 
 	for x in abc hjkl xyz; \
 	do \
-		echo -n "$${x} :: "; \
+		echo -n " $${x} ::"; \
 	done
 	echo
 
 	for x in abc hjkl xyz; do \
-		echo -n "$${x} :: "; \
+		echo -n " $${x} ::"; \
 	done
 	echo
 
 	for x in abc hjkl xyz; \
-	do echo -n "$${x} :: "; \
+	do echo -n " $${x} ::"; \
 	done
 	echo
 
@@ -51,17 +59,17 @@ complex: # a sample command exploring complex multiline syntax
 
 	while read x; \
 	do \
-		echo -n "$${x} :: "; \
+		echo -n " $${x} ::"; \
 	done <<< $$'abc\n hjkl\n xyz'
 	echo
 
 	while read x; do \
-		echo -n "$${x} :: "; \
+		echo -n " $${x} ::"; \
 	done <<< $$'abc\n hjkl\n xyz'
 	echo
 
 	while read x; \
-	do echo -n "$${x} :: "; \
+	do echo -n " $${x} ::"; \
 	done <<< $$'abc\n hjkl\n xyz'
 	echo
 
@@ -70,35 +78,35 @@ complex: # a sample command exploring complex multiline syntax
 	x=''
 	if [[ -z "$${x}" ]]; \
 	then \
-		echo -n "abc"; \
-		echo -n " :: "; \
+		echo -n " abc"; \
+		echo -n " ::"; \
 	elif [[ "$${x}" =~ a[Bb][a-z]$$ ]]; \
 	then \
-		echo -n "hjkl"; \
-		echo -n " :: "; \
+		echo -n " hjkl"; \
+		echo -n " ::"; \
 	else \
-		echo -n "xyz"; \
-		echo -n " :: "; \
+		echo -n " xyz"; \
+		echo -n " ::"; \
 	fi
 
 	y=''
 	if [[ -n "$${y}" ]]; then \
-		echo -n "abc"; \
-		echo -n " :: "; \
+		echo -n " abc"; \
+		echo -n " ::"; \
 	elif ! [[ "$${y}" =~ a[Bb][a-z]$$ ]]; then \
-		echo -n "hjkl"; \
-		echo -n " :: "; \
+		echo -n " hjkl"; \
+		echo -n " ::"; \
 	else \
-		echo -n "xyz"; \
-		echo -n " :: "; \
+		echo -n " xyz"; \
+		echo -n "  ::"; \
 	fi
 
 	z=''
 	if [[ -z "$${x}" ]]; \
-	then x='abc'; echo -n "$${x} :: "; \
+	then x='abc'; echo -n " $${x} ::"; \
 	elif [[ x =~ a[Bb][a-z]$$ ]]; \
-	then x='hjkl'; echo -n "$${x} :: "; \
-	else echo -n "$${x} :: "; \
+	then x='hjkl'; echo -n " $${x} ::"; \
+	else echo -n " $${x} ::"; \
 	fi
 	echo
 
@@ -106,17 +114,17 @@ complex: # a sample command exploring complex multiline syntax
 
 	for x in abc hjkl xyz; \
 	do \
-		echo -n "$${x} :: "; \
+		echo -n " $${x} ::"; \
 	done
 	echo
 
 	for x in abc hjkl xyz; do \
-		echo -n "$${x} :: "; \
+		echo -n " $${x} ::"; \
 	done
 	echo
 
 	for x in abc hjkl xyz; \
-	do echo -n "$${x} :: "; \
+	do echo -n " $${x} ::"; \
 	done
 	echo
 
@@ -124,17 +132,17 @@ complex: # a sample command exploring complex multiline syntax
 
 	while read x; \
 	do \
-		echo -n "$${x} :: "; \
+		echo -n " $${x} ::"; \
 	done <<< $$'abc\n hjkl\n xyz';
 	echo
 
 	while read x; do \
-		echo -n "$${x} :: "; \
+		echo -n " $${x} ::"; \
 	done <<< $$'abc\n hjkl\n xyz';
 	echo
 
 	while read x; \
-	do echo -n "$${x} :: "; \
+	do echo -n " $${x} ::"; \
 	done <<< $$'abc\n hjkl\n xyz';
 	echo
 
@@ -143,38 +151,38 @@ complex: # a sample command exploring complex multiline syntax
 	x=''
 	if [[ -z "$${x}" ]]; \
 	then \
-		echo -n "abc"; \
-		echo -n " :: "; \
+		echo -n " abc"; \
+		echo -n " ::"; \
 	elif [[ "$${x}" =~ a[Bb][a-z]$$ ]]; \
 	then \
-		echo -n "hjkl"; \
-		echo -n " :: "; \
+		echo -n " hjkl"; \
+		echo -n " ::"; \
 	else \
-		echo -n "xyz"; \
-		echo -n " :: "; \
+		echo -n " xyz"; \
+		echo -n " ::"; \
 	fi
 
 	y=''
 	if [[ -n "$${y}" ]]; then \
-		echo -n "abc"; \
-		echo -n " :: "; \
+		echo -n " abc"; \
+		echo -n " ::"; \
 	elif ! [[ "$${y}" =~ a[Bb][a-z]$$ ]]; then \
-		echo -n "hjkl"; \
-		echo -n " :: "; \
+		echo -n " hjkl"; \
+		echo -n " ::"; \
 	else \
-		echo -n "xyz"; \
-		echo -n " :: "; \
+		echo -n " xyz"; \
+		echo -n " ::"; \
 	fi
 
 	z=''
 	if [[ -z "$${x}" ]]; \
-	then x='abc'; echo -n "$${x} :: "; \
+	then x='abc'; echo -n " $${x} ::"; \
 	elif [[ x =~ a[Bb][a-z]$$ ]]; \
-	then x='hjkl'; echo -n "$${x} :: "; \
-	else echo -n "$${x} :: "; \
+	then x='hjkl'; echo -n " $${x} ::"; \
+	else echo -n " $${x} ::"; \
 	fi
 
 .PHONY: .tasks
 .tasks:
-	@grep -E "^(([[:alnum:]_-][[:alnum:][:space:]_-]+):([[:alnum:][:space:]_-]+)?#)" $(MAKEFILE_LIST) \
+	grep -E "^(([[:alnum:]_-][[:alnum:][:space:]_-]+):([[:alnum:][:space:]_-]+)?#)" $(MAKEFILE_LIST) \
 	| sed -Ee "s/^/  /" -e 's/[[:space:]]*:[[:alnum:] _-]*#[[:space:]]*/ · /'
