@@ -539,11 +539,10 @@ function run() ( set -euo pipefail
     runfile_variables="${runfile_variables}"$'\n\n'
   fi
 
-  baseindent="$( grep -Eo '^[[:space:]]+' "$( smartcase-file runfile )" | head -1 )"
-  if [[ -z "${baseindent}" ]]
-  then
-    baseindent='\t'
-  fi
+  baseindent="$( \
+    grep -Eoz "^${task_re}[^\n]*\n[[:space:]]*" "$( smartcase-file runfile )" \
+    | head -2 | tail -1
+  )"
 
 # ::::::::::::::::::::::::::::::::::::::::::
 # Construct temporary Makefile from Runfile:
