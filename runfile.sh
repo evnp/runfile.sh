@@ -518,7 +518,7 @@ function run() ( set -euo pipefail
     runfile_grep_filter_args=( -E "^(${task_re}|\\s*${trap_re})" )
   elif [[ -n "${RUNFILE_TRAP:-}" ]]
   then
-    runfile_grep_filter_args=( -E "^(${task_re}|\\s+${RUNFILE_TRAP})" )
+    runfile_grep_filter_args=( -E "^(${task_re}|\\s*${RUNFILE_TRAP})" )
   else
     runfile_grep_filter_args=( -Ev "^\s*${trap_re}" )
   fi
