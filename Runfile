@@ -26,6 +26,9 @@ test: # test
   if [[ "$(@)" =~ ^[0-9]+$$ ]]
   then
     run test-by-index "$(@)"
+  elif [[ "$(@)" =~ ^(2space|3space|4space|8space|tabbed|compact|nodesc)$$ ]]
+  then
+    run test-by-directory "$(@)"
   elif [[ -n "$(@)" ]]
   then
     run test-by-substring "$(@)"
@@ -40,6 +43,11 @@ test-all: lint # run all tests
     TEST_RUNFILE="$${runfile}" \
     $(BIN)/bats --jobs 16 --no-parallelize-across-files tests/test.bats
   done
+
+test-by-directory: lint # run all tests in test directory
+  echo -ne "$$( tput smul )$$( tput bold )tests/$(@)/Runfile$$( tput sgr0 ) -> "
+  TEST_RUNFILE="tests/$(@)/Runfile" \
+  $(BIN)/bats --jobs 16 --no-parallelize-across-files tests/test.bats
 
 test-by-index: lint # run test case at index
   for runfile in tests/*/Runfile
