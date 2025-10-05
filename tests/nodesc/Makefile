@@ -1,20 +1,18 @@
 SHELL = /bin/bash
 
-.PHONY: _tasks
-_tasks: .tasks
 
 .PHONY: start
-start:stop#
+start:stop
 	run build env=dev
 	echo "starting app"
 	run loading
 
 .PHONY: stop
-stop:#
+stop:
 	echo "stopping app"
 
 .PHONY: loading
-loading:#
+loading:
 	if [[ $(@) == '--fin' ]]; \
 	then \
 		echo "loading finished"; \
@@ -23,20 +21,20 @@ loading:#
 	fi
 
 .PHONY: build
-build:lint#
+build:lint
 	[[ -n $(env) ]] && echo "buiding app for $(env)" || echo "error: missing env"
 
 .PHONY: test
-test:#
+test:
 	run build env=test
 	[[ -n $(@) ]] && echo "running tests $(@)" || echo "running all tests"
 
 .PHONY: lint
-lint:#
+lint:
 	[[ -n $(1) ]] && echo "linting file $(1)" || echo "linting all files"
 
 .PHONY: complex
-complex:#
+complex:
 	echo "--- for loops ---"
 	for x in abc hjkl xyz; \
 	do \
@@ -158,8 +156,3 @@ complex:#
 	then x='hjkl'; echo -n " $${x} ::"; \
 	else echo -n " $${x} ::"; \
 	fi
-
-.PHONY: .tasks
-.tasks:
-	grep -E "^(([[:alnum:]_-][[:alnum:][:space:]_-]+):([[:alnum:][:space:]_-]+)?#)" $(MAKEFILE_LIST) \
-	| sed -Ee "s/^/  /" -e 's/[[:space:]]*:[[:alnum:] _-]*#[[:space:]]*/ · /'

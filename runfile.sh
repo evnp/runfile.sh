@@ -166,22 +166,24 @@ function print-makefile() {
   sed -E "s!\tmake --makefile ${makefile} !\tmake !" "$@"
 }
 
-function print-runfile-commands() {
+function print-runfile-commands() { local task_re
+  task_re='([[:alnum:]_-][[:alnum:] _-]+):[[:alnum:] _-]*(#(.*))?'
   # Print current Runfile commands:
   echo
-  grep -E '[[:alnum:]_-][[:alnum:] _-]+:[[:alnum:] _-]*#' "$( smartcase-file runfile )" \
-  | sed -Ee 's/:.*#/ · /g' -e 's/  / /g' -e 's/^/  /g'
-  # Print Runfile command aliases if any are currently available:
+  grep -E "^${task_re}$" "$( smartcase-file runfile )" \
+  | sed -Ee "s/^${task_re}$/\1 · \3/g" -e 's/  / /g' -e 's/^/  /g'
   echo
+  # Print Runfile command aliases if any are currently available:
   awk 'NR==FNR{a[$0]=1;next}a[$0]' <( bash -ic 'alias' ) <( print-runfile-aliases ) \
   | sed -e "s/\'/ /g" -e "s/= / · /" -e 's/^/  /' -e 's/$/\n/' \
   | perl -0777 -pe 's/\n\n(.)/\n\1/g'
 }
 
 function print-runfile-aliases() {
+  task_re='([[:alnum:]_-][[:alnum:] _-]+):[[:alnum:] _-]*(#(.*))?'
   echo '# Runfile Aliases'
-  grep -E '[[:alnum:]_-][[:alnum:] _-]+:[[:alnum:] _-]*#' "$( smartcase-file runfile )" \
-  | sed -E 's/.*(^| )([[:alnum:]_-][[:alnum:]_-]+):.*/\2/g' \
+  grep -E "^${task_re}$" "$( smartcase-file runfile )" \
+  | sed -E "s/.*(^| )${task_re}$/\2/g" \
   | awk '!_[substr($1,1,1)]++' `# unique on first char of each command` \
   | sed -E "s/(.)(.*)/alias ${RUNFILE_ALIASES_PREFIX:-r}\1='run \1\2'/"
   echo '# END Runfile Aliases'
@@ -403,11 +405,11 @@ EOF
 }
 
 function run() ( set -euo pipefail
-  local makefile='' buffer='' task='' baseindent='' tab=$'\t'
+  local makefile='' buffer='' task='' baseindent=''
   local arg='' make_args=() named_args=() pos_args=() pos_arg_idx=0
 
   local runfile_variables='' runfile_variable_re='' run_arg_re=''
-  local task_re='' trap_re='' vbse_re_1='' vbse_re_2=''
+  local task_re='' trap_re=''
   local trap_sig='' runfile_grep_filter_args=()
 
   run_arg_re='-([hvrmena]|-(help|version|runfile|makefile|edit|new|alias|eject|verbose|compact|compat|noconfirm|noedit))'
@@ -507,26 +509,17 @@ function run() ( set -euo pipefail
     fi
   done
 
-  # If --verbose specified, use modified patterns for Makefile .tasks list so
-  # that when each task is printed, its commands are printed line-by-line underneath:
-  if [[ " $* " == *' --verbose '* ]] \
-  || [[ "${RUNFILE_VERBOSE:-}" =~ ^(1|true|TRUE|True)$ ]]
-  then
-    vbse_re_1='\\s+|'
-    vbse_re_2='s/^([^[:space:]])/\\n\\1/g'
-  fi
-
-  task_re='([[:alnum:]_-][[:alnum:][:space:]_-]+):([[:alnum:][:space:]_-]+)?#'
+  task_re='([[:alnum:]_-][[:alnum:] _-]+):([[:alnum:] _-]+)?(#.*)?'
   trap_re='(EXIT|HUP|INT|QUIT|ABRT|KILL|ALRM|TERM)'
 
   if [[ "${RUNFILE_TRAP:-}" == '*' ]]
   then
-    runfile_grep_filter_args=( -E "^(${task_re}|\\s*${trap_re})" )
+    runfile_grep_filter_args=( -E "^(${task_re}|\s*${trap_re} .*)$" )
   elif [[ -n "${RUNFILE_TRAP:-}" ]]
   then
-    runfile_grep_filter_args=( -E "^(${task_re}|\\s*${RUNFILE_TRAP})" )
+    runfile_grep_filter_args=( -E "^(${task_re}|\s*${RUNFILE_TRAP} .*)$" )
   else
-    runfile_grep_filter_args=( -Ev "^\s*${trap_re}" )
+    runfile_grep_filter_args=( -Ev "^\s*${trap_re} .*$" )
   fi
 
   if [[ -n "${RUNFILE_SKIP_SUBTASKS:-}" ]]
@@ -556,9 +549,7 @@ function run() ( set -euo pipefail
 cat <<EOF> "${makefile}"
 SHELL = ${SHELL:-bash}
 
-${runfile_variables}.PHONY: _tasks
-_tasks: .tasks
-$(
+${runfile_variables}$(
   grep "${runfile_grep_filter_args[@]}" "$( smartcase-file runfile )" \
   | grep -Ev "${runfile_variable_re}" \
   | sed -E \
@@ -572,7 +563,7 @@ $(
         `# prefix every line with TAB` \
       -e "s!^\t\$!!" \
         `# remove TAB from blank lines` \
-      -e "s!^\t${task_re}(.*)\$!\n.PHONY: \1\n\1:${subtask_re}\#\3!" \
+      -e "s!^\t${task_re}(.*)\$!\n.PHONY: \1\n\1:${subtask_re}\3!" \
         `# remove TAB-prefix from lines that match task pattern` \
       `# Improve Make's default handling of multiline statements (if, for, while):` \
       -e "s!^\t\t(.*;[[:space:]]*[^\\]?)\$!\t\t\1 \\\\!" \
@@ -588,11 +579,6 @@ $(
         `# add backslash after "then", "else", "do" when on their own line` \
   | cat -s
 )
-
-.PHONY: .tasks
-.tasks:
-${tab}grep -E "^(${vbse_re_1}${task_re})" \$(MAKEFILE_LIST) \\
-${tab}| sed -Ee "${vbse_re_2:-s/^/  /}" -e 's/[[:space:]]*:[[:alnum:] _-]*#[[:space:]]*/ · /'
 EOF
 
 # Done with temporary Makefile construction.

@@ -1,7 +1,5 @@
 SHELL = /bin/bash
 
-.PHONY: _tasks
-_tasks: .tasks
 
 .PHONY: start
 start: stop # start app
@@ -181,8 +179,3 @@ complex: # a sample command exploring complex multiline syntax
 	then x='hjkl'; echo -n " $${x} ::"; \
 	else echo -n " $${x} ::"; \
 	fi
-
-.PHONY: .tasks
-.tasks:
-	grep -E "^(([[:alnum:]_-][[:alnum:][:space:]_-]+):([[:alnum:][:space:]_-]+)?#)" $(MAKEFILE_LIST) \
-	| sed -Ee "s/^/  /" -e 's/[[:space:]]*:[[:alnum:] _-]*#[[:space:]]*/ · /'

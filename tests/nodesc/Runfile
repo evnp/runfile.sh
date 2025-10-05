@@ -1,27 +1,27 @@
-start:stop#
+start:stop
 run build env=dev
 echo "starting app"
 run loading
 EXIT run loading --fin
 INT run loading --fin
-stop:#
+stop:
 HUP run loading --fin
 echo "stopping app"
-loading:#
+loading:
 if [[ $(@) == '--fin' ]]
 then
   echo "loading finished"
 else
   echo "loading started"
 fi
-build:lint#
+build:lint
 [[ -n $(env) ]] && echo "buiding app for $(env)" || echo "error: missing env"
-test:#
+test:
 run build env=test
 [[ -n $(@) ]] && echo "running tests $(@)" || echo "running all tests"
-lint:#
+lint:
 [[ -n $(1) ]] && echo "linting file $(1)" || echo "linting all files"
-complex:#
+complex:
 echo "--- for loops ---"
 for x in abc hjkl xyz
 do
