@@ -406,9 +406,11 @@ function run() ( set -euo pipefail
   local makefile='' buffer='' task='' baseindent='' tab=$'\t'
   local arg='' make_args=() named_args=() pos_args=() pos_arg_idx=0
 
-  local runfile_variables='' runfile_variable_re=''
+  local runfile_variables='' runfile_variable_re='' run_arg_re=''
   local task_re='' trap_re='' vbse_re_1='' vbse_re_2=''
   local trap_sig='' runfile_grep_filter_args=()
+
+  run_arg_re='-([hvrmena]|-(help|version|runfile|makefile|edit|new|alias|eject|verbose|compact|compat|noconfirm|noedit))'
 
   [[ "$*" == '' ]] && print-runfile-commands && exit 0
 
@@ -481,8 +483,12 @@ function run() ( set -euo pipefail
       make_args+=( "${arg/make-}" )
     elif [[ "${arg}" =~ ^[[:alnum:]_-]+\= ]]
     then
-      named_args+=( "${arg}" )
-    else
+      if ! [[ "${arg}" =~ ^${run_arg_re}\= ]]
+      then
+        named_args+=( "${arg}" )
+      fi
+    elif ! [[ "${arg}" =~ ^${run_arg_re}$ ]]
+    then
       if [[ -z "${task}" ]]
       then
         task="${arg}"
@@ -530,7 +536,7 @@ function run() ( set -euo pipefail
     subtask_re='\2'
   fi
 
-  runfile_variable_re="^[[:space:]]*[A-Z]+ :*= "
+  runfile_variable_re='^[[:space:]]*[A-Z]+ :*= '
   runfile_variables="$( \
     grep -E "${runfile_variable_re}" "$( smartcase-file runfile )" || true
   )"
