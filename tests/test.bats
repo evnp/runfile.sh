@@ -10,7 +10,7 @@ function execute_test_command() { local cmd
     exit 1
   fi
 
-  cd $( dirname "${TEST_RUNFILE}" )
+  cd "$( dirname "${TEST_RUNFILE}" )"
 
   cmd="${BATS_TEST_DESCRIPTION}"
   cmd="${cmd/${BATS_TEST_NUMBER} /}"
@@ -36,6 +36,17 @@ task_list="$( cat <<EOF
   complex · a sample command exploring complex multiline syntax
 EOF
 )"
+
+if [[ "$( dirname "${TEST_RUNFILE}" )" == *'nodesc' ]]
+then
+  task_list='  start · '
+  task_list+=$'\n''  stop · '
+  task_list+=$'\n''  loading · '
+  task_list+=$'\n''  build · '
+  task_list+=$'\n''  test · '
+  task_list+=$'\n''  lint · '
+  task_list+=$'\n''  complex · '
+fi
 
 @test "${BATS_TEST_NUMBER} run" {
   execute_test_command

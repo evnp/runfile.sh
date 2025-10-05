@@ -1,0 +1,165 @@
+SHELL = /bin/bash
+
+.PHONY: _tasks
+_tasks: .tasks
+
+.PHONY: start
+start:stop#
+	run build env=dev
+	echo "starting app"
+	run loading
+
+.PHONY: stop
+stop:#
+	echo "stopping app"
+
+.PHONY: loading
+loading:#
+	if [[ $(@) == '--fin' ]]; \
+	then \
+		echo "loading finished"; \
+	else \
+		echo "loading started"; \
+	fi
+
+.PHONY: build
+build:lint#
+	[[ -n $(env) ]] && echo "buiding app for $(env)" || echo "error: missing env"
+
+.PHONY: test
+test:#
+	run build env=test
+	[[ -n $(@) ]] && echo "running tests $(@)" || echo "running all tests"
+
+.PHONY: lint
+lint:#
+	[[ -n $(1) ]] && echo "linting file $(1)" || echo "linting all files"
+
+.PHONY: complex
+complex:#
+	echo "--- for loops ---"
+	for x in abc hjkl xyz; \
+	do \
+		echo -n " $${x} ::"; \
+	done
+	echo
+	for x in abc hjkl xyz; do \
+		echo -n " $${x} ::"; \
+	done
+	echo
+	for x in abc hjkl xyz; \
+	do echo -n " $${x} ::"; \
+	done
+	echo
+	echo "--- while loops ---"
+	while read x; \
+	do \
+		echo -n " $${x} ::"; \
+	done <<< $$'abc\n hjkl\n xyz'
+	echo
+	while read x; do \
+		echo -n " $${x} ::"; \
+	done <<< $$'abc\n hjkl\n xyz'
+	echo
+	while read x; \
+	do echo -n " $${x} ::"; \
+	done <<< $$'abc\n hjkl\n xyz'
+	echo
+	echo "--- if constructs ---"
+	x=''
+	if [[ -z "$${x}" ]]; \
+	then \
+		echo -n " abc"; \
+		echo -n " ::"; \
+	elif [[ "$${x}" =~ a[Bb][a-z]$$ ]]; \
+	then \
+		echo -n " hjkl"; \
+		echo -n " ::"; \
+	else \
+		echo -n " xyz"; \
+		echo -n " ::"; \
+	fi
+	y=''
+	if [[ -n "$${y}" ]]; then \
+		echo -n " abc"; \
+		echo -n " ::"; \
+	elif ! [[ "$${y}" =~ a[Bb][a-z]$$ ]]; then \
+		echo -n " hjkl"; \
+		echo -n " ::"; \
+	else \
+		echo -n " xyz"; \
+		echo -n "  ::"; \
+	fi
+	z=''
+	if [[ -z "$${x}" ]]; \
+	then x='abc'; echo -n " $${x} ::"; \
+	elif [[ x =~ a[Bb][a-z]$$ ]]; \
+	then x='hjkl'; echo -n " $${x} ::"; \
+	else echo -n " $${x} ::"; \
+	fi
+	echo
+	echo "--- for loops :: pathological semicolon usage ---"
+	for x in abc hjkl xyz; \
+	do \
+		echo -n " $${x} ::"; \
+	done
+	echo
+	for x in abc hjkl xyz; do \
+		echo -n " $${x} ::"; \
+	done
+	echo
+	for x in abc hjkl xyz; \
+	do echo -n " $${x} ::"; \
+	done
+	echo
+	echo "--- while loops :: pathological semicolon usage ---"
+	while read x; \
+	do \
+		echo -n " $${x} ::"; \
+	done <<< $$'abc\n hjkl\n xyz';
+	echo
+	while read x; do \
+		echo -n " $${x} ::"; \
+	done <<< $$'abc\n hjkl\n xyz';
+	echo
+	while read x; \
+	do echo -n " $${x} ::"; \
+	done <<< $$'abc\n hjkl\n xyz';
+	echo
+	echo "--- if constructs :: pathological semicolon usage ---"
+	x=''
+	if [[ -z "$${x}" ]]; \
+	then \
+		echo -n " abc"; \
+		echo -n " ::"; \
+	elif [[ "$${x}" =~ a[Bb][a-z]$$ ]]; \
+	then \
+		echo -n " hjkl"; \
+		echo -n " ::"; \
+	else \
+		echo -n " xyz"; \
+		echo -n " ::"; \
+	fi
+	y=''
+	if [[ -n "$${y}" ]]; then \
+		echo -n " abc"; \
+		echo -n " ::"; \
+	elif ! [[ "$${y}" =~ a[Bb][a-z]$$ ]]; then \
+		echo -n " hjkl"; \
+		echo -n " ::"; \
+	else \
+		echo -n " xyz"; \
+		echo -n " ::"; \
+	fi
+	z=''
+	if [[ -z "$${x}" ]]; \
+	then x='abc'; echo -n " $${x} ::"; \
+	elif [[ x =~ a[Bb][a-z]$$ ]]; \
+	then x='hjkl'; echo -n " $${x} ::"; \
+	else echo -n " $${x} ::"; \
+	fi
+
+.PHONY: .tasks
+.tasks:
+	grep -E "^(([[:alnum:]_-][[:alnum:][:space:]_-]+):([[:alnum:][:space:]_-]+)?#)" $(MAKEFILE_LIST) \
+	| sed -Ee "s/^/  /" -e 's/[[:space:]]*:[[:alnum:] _-]*#[[:space:]]*/ · /'
