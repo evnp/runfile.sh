@@ -237,6 +237,23 @@ function ordinal() {
   esac
 }
 
+function inject-semicolons-and-backslashes-if-not-running-trap() {
+  if [[ -z "${RUNFILE_TRAP:-}" ]]
+  then
+    sed -E \
+      -e "s!^\t(.*[^\\])\#(.*)\$!\t\1\`\#\2\`!" \
+        `# wrap code comments in backticks to make them work with backslashed lines` \
+      -e "s!^\t(.*;[[:space:]]*[^\\]?)\$!\t\1 \\\\!" \
+      -e "s!^\t(.*[^\\])\$!\t\1; \\\\!" \
+      -e "s!(then|else|do); \\\\\$!\1 \\\\!" \
+        `# remove semicolons from keywords when followed by backslash` \
+      -e "s!^\t$( trap_re )(.*); \\\\\$!\t\1\2!" \
+        `# remove semicolons and backslashes from trap lines`
+  else
+    cat
+  fi
+}
+
 function wizard() {
   local state='task1' task='' taskidx=0 cmdidx=0 prev_states=() prev_runfiles=()
 
@@ -569,18 +586,7 @@ ${runfile_variables}$(
         `# remove TAB from blank lines` \
       -e "s!^\t$( task_re )\$!\n.PHONY: \1\n\1:$( subtask_re )\3!" \
         `# add PHONY declarations; remove TAB-prefix from task lines` \
-      `# Improve Make's default handling of multiline statements (if, for, while):` \
-      -e "s!^\t\t(.*;[[:space:]]*[^\\]?)\$!\t\t\1 \\\\!" \
-      -e "s!^\t\t(.*[^\\])\$!\t\t\1; \\\\!" \
-        `# add backslash and/or semicolon to deep-indented lines where missing` \
-      -e "s!^\t(if|elif|for|while)[[:space:]]([^;]*;[[:space:]]*(then|do))\$!\t\1 \2 \\\\!" \
-        `# add backslash after "if ...; then" and "for ...; do" lines` \
-      -e "s!^\t(if|elif|then|else|for|while|do)[[:space:]](.*;)\$!\t\1 \2 \\\\!" \
-        `# add backslash after keyword lines that end with a semicolon` \
-      -e "s!^\t(if|elif|then|else|for|while|do)[[:space:]](.*[^;\\])\$!\t\1 \2; \\\\!" \
-        `# add semicolon and backslash after keyword lines NOT ending with semicolon` \
-      -e "s!^\t(then|else|do)\$!\t\1 \\\\!" \
-        `# add backslash after "then", "else", "do" when on their own line` \
+  | add-semicolons-and-backslashes-if-not-running-trap \
   | cat -s
 )
 EOF
