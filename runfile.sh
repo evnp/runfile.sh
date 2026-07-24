@@ -568,7 +568,7 @@ function run() ( set -euo pipefail
 # Construct temporary Makefile from Runfile:
 # Note: <<-EOF doesn't produce correct indentation for final lines; <<EOF required.
 cat <<EOF> "${makefile}"
-SHELL = ${SHELL:-bash}
+SHELL := ${SHELL:-bash}
 
 ${runfile_variables}$(
   grep "${runfile_grep_filter_args[@]}" "$( smartcase-file runfile )" \
