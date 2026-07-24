@@ -3,20 +3,20 @@ SHELL := /bin/bash
 
 .PHONY: start
 start:stop
-	set -e; \
+	set -e -- ; \
 	run build env=dev; \
 	echo "starting app"; \
 	run loading; \
 
 .PHONY: stop
 stop:
-	set -e; \
+	set -e -- ; \
 	echo "stopping app"; \
 
 .PHONY: loading
 loading:
-	set -e; \
-	if [[ $(@) == '--fin' ]]; \
+	set -e -- ; \
+	if [[ $${@} == '--fin' ]]; \
 	then \
 		echo "loading finished"; \
 	else \
@@ -25,23 +25,23 @@ loading:
 
 .PHONY: build
 build:lint
-	set -e; \
-	[[ -n $(env) ]] && echo "buiding app for $(env)" || echo "error: missing env"; \
+	set -e -- ; \
+	[[ -n `printf '%s' '$(env)'` ]] && echo "buiding app for `printf '%s' '$(env)'`" || echo "error: missing env"; \
 
 .PHONY: test
 test:
-	set -e; \
+	set -e -- ; \
 	run build env=test; \
-	[[ -n $(@) ]] && echo "running tests $(@)" || echo "running all tests"; \
+	[[ -n $${@} ]] && echo "running tests $${@}" || echo "running all tests"; \
 
 .PHONY: lint
 lint:
-	set -e; \
-	[[ -n $(1) ]] && echo "linting file $(1)" || echo "linting all files"; \
+	set -e -- ; \
+	[[ -n $${1} ]] && echo "linting file $${1}" || echo "linting all files"; \
 
 .PHONY: complex
 complex:
-	set -e; \
+	set -e -- ; \
 	echo "--- for loops ---"; \
 	for x in abc hjkl xyz; \
 	do \

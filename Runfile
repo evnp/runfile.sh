@@ -65,3 +65,9 @@ test-by-substring: lint # run test cases matching substring
     $(BIN)/bats -f "$(@)" tests/test.bats
   done
 
+test-update-makefiles: # re-generate test reference makefiles from runfiles
+  for dir in {2,3,4,8}space/ tabbed/ compact/ nodesc/
+  do
+    ( cd "tests/$${dir}" && run -m > Makefile )
+  done
+

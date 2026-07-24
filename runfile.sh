@@ -237,8 +237,10 @@ function ordinal() {
   esac
 }
 
-function inject-semicolons-and-backslashes-if-not-running-trap() {
-  if [[ -z "${RUNFILE_TRAP:-}" ]]
+function inject-semicolons-and-backslashes() {
+  if [[ -z "${RUNFILE_TRAP:-}" \
+    && "${is_compat_mode}" != TRUE \
+    && "${is_ejecting_makefile}" != TRUE ]]
   then
     sed -E \
       -e "s!^\t(.*[^\\])\#(.*)\$!\t\1\`\#\2\`!" \
@@ -254,10 +256,20 @@ function inject-semicolons-and-backslashes-if-not-running-trap() {
   fi
 }
 
-function inject-set-e-if-not-running-trap() {
-  if [[ -z "${RUNFILE_TRAP:-}" ]]
+function inject-set-args-line() {
+  local values=''
+
+  if [[ -z "${RUNFILE_TRAP:-}" \
+    && "${is_compat_mode}" != TRUE \
+    && "${is_ejecting_makefile}" != TRUE ]]
   then
-    sed -E -e "s!^$( task_re )\$!\1:$( subtask_re )\3\n\tset -e; \\\\!"
+    for arg in "${pos_args[@]}"
+    do
+      [[ -n "${values}" ]] && values+=" "
+      values+="\`printf '%s' '${arg}'\`"
+    done
+
+    sed -E -e "s!^$( task_re )\$!\1:$( subtask_re )\3\n\tset -e -- ${values}; \\\\!"
   else
     cat
   fi
@@ -450,12 +462,25 @@ EOF
 
 function run() ( set -euo pipefail
   local makefile='' buffer='' task='' baseindent=''
-  local arg='' make_args=() named_args=() pos_args=() pos_arg_idx=0
+  local arg='' make_args=() named_args=() pos_args=()
 
   local runfile_variables=''
   local trap_sig='' runfile_grep_filter_args=()
 
+  local is_compat_mode=FALSE is_ejecting_makefile=FALSE
+
   [[ "$*" == '' ]] && print-runfile-commands && exit 0
+
+  if [[ " $* " == *' --compat '* ]] || \
+    [[ "${RUNFILE_COMPAT:-}" =~ ^(1|true|TRUE|True)$ ]]
+  then
+    is_compat_mode=TRUE
+  fi
+
+  if [[ " $* " == *' --eject '* ]]
+  then
+    is_ejecting_makefile=TRUE
+  fi
 
   for action in help version runfile makefile edit new alias eject v r m e n a e
   do
@@ -595,8 +620,8 @@ ${runfile_variables}$(
         `# remove TAB from blank lines` \
       -e "s!^\t$( task_re )\$!\n.PHONY: \1\n\1:$( subtask_re )\3!" \
         `# add PHONY declarations; remove TAB-prefix from task lines` \
-  | inject-semicolons-and-backslashes-if-not-running-trap \
-  | inject-set-e-if-not-running-trap \
+  | inject-semicolons-and-backslashes \
+  | inject-set-args-line \
   | cat -s
 )
 EOF
@@ -605,18 +630,15 @@ EOF
 # ::::::::::::::::::::::::::::::::::::::::::
 
   # Process interpolated args within generated Makefile: $(arg) $(@) $(1) $(2) etc.
-  if [[ " $* " != *' --compat '* ]] && \
-    ! [[ "${RUNFILE_COMPAT:-}" =~ ^(1|true|TRUE|True)$ ]] && \
-    # If running in Make compatibility mode, skip this section.
-    [[ " $* " != *' --makefile '* && " $* " != *' -m '* ]] && \
-    [[ " $* " != *' --eject '* ]]
-    # If outputting Makefile, skip this section.
+  if [[ -z "${RUNFILE_TRAP:-}" && \
+    "${is_compat_mode}" == FALSE && \
+    "${is_ejecting_makefile}" == FALSE ]]
   then
     buffer="$(
-      sed -E 's!(\$\((@|[0-9]+|[[:alpha:]][[:alnum:]_]*)\))!\`printf '"'%s' '\1'"'\`!g' \
+      sed -E 's!(\$\(([[:alpha:]][[:alnum:]_]*)\))!\`printf '"'%s' '\1'"'\`!g' \
         "${makefile}"
     )"
-    # Wrap all Runfile argument patterns in printf, eg. $(@) -> `printf '%s' '$(@)'`
+    # Wrap Runfile argument patterns in printf eg. $(abc) -> `printf '%s' '$(abc)'`
     # This resolves issues with Make arg-handling behavior when args are omitted.
     # For example: [[ -n $(arg) ]] && echo "${arg}"
     # This will error if $(arg) is not specified, because Make executes: [[ -n  ]]
@@ -626,17 +648,21 @@ EOF
     # the quotes would be included when args are interpolated within strings. eg.
     # "hello: $(world)" -> "hello: '$(world)'" -> "hello: ''" (unwanted quotes)
 
-    # Replace $(@) in script with concatenation of all positional args:
-    buffer="${buffer//\$(@)/${pos_args[*]}}"
-    # Note: Perform this replacement even if no positional args were provided,
-    # because otherwise default Make behavior interpolates ${task} in place of $(@).
-
-    # Replace $(1) $(2) etc. in script with each individual positional arg:
-    for arg in "${pos_args[@]}"
-    do
-      (( pos_arg_idx++ )) || true
-      buffer="${buffer//\$(${pos_arg_idx})/${arg}}"
-    done
+    # Replace $(@) $(1) $(2) etc. in script with Bash-style positional args:
+    buffer="$(
+      echo "${buffer}" | \
+      sed -E \
+        -e 's!([^\$])\$([0-9]+)!\1\$\${\2}!g' \
+        -e 's!([^\$])\$\(([0-9]+)\)!\1\$\${\2}!g' \
+        -e 's!([^\$])\$\{([0-9]+)\}!\1\$\${\2}!g' \
+        -e 's!([^\$])\$@!\1\$\${@}!g' \
+        -e 's!([^\$])\$\(@\)!\1\$\${@}!g' \
+        -e 's!([^\$])\$\{@\}!\1\$\${@}!g' \
+        -e 's!([^\$])\$\(@:([0-9]+)\)!\1\$\${@:\2}!g' \
+        -e 's!([^\$])\$\{@:([0-9]+)\}!\1\$\${@:\2}!g' \
+        -e 's!([^\$])\$\(@:([0-9]+):([0-9]+)\)!\1\$\${@:\2:\3}!g' \
+        -e 's!([^\$])\$\{@:([0-9]+):([0-9]+)\}!\1\$\${@:\2:\3}!g'
+    )"
 
     # Write buffer back to temporary makefile:
     echo "${buffer}" > "${makefile}"
