@@ -254,6 +254,15 @@ function inject-semicolons-and-backslashes-if-not-running-trap() {
   fi
 }
 
+function inject-set-e-if-not-running-trap() {
+  if [[ -z "${RUNFILE_TRAP:-}" ]]
+  then
+    sed -E -e "s!^$( task_re )\$!\1:$( subtask_re )\3\n\tset -e; \\\\!"
+  else
+    cat
+  fi
+}
+
 function wizard() {
   local state='task1' task='' taskidx=0 cmdidx=0 prev_states=() prev_runfiles=()
 
@@ -586,7 +595,8 @@ ${runfile_variables}$(
         `# remove TAB from blank lines` \
       -e "s!^\t$( task_re )\$!\n.PHONY: \1\n\1:$( subtask_re )\3!" \
         `# add PHONY declarations; remove TAB-prefix from task lines` \
-  | add-semicolons-and-backslashes-if-not-running-trap \
+  | inject-semicolons-and-backslashes-if-not-running-trap \
+  | inject-set-e-if-not-running-trap \
   | cat -s
 )
 EOF
