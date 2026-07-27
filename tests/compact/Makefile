@@ -3,19 +3,19 @@ SHELL := /bin/bash
 
 .PHONY: start
 start: stop # start app
-	set -e -- ; \
+	set -e; \
 	run build env=dev `# tasks can be run directly from other tasks`; \
 	echo "starting app"; \
 	run loading; \
 
 .PHONY: stop
 stop: # stop app
-	set -e -- ; \
+	set -e; \
 	echo "stopping app"; \
 
 .PHONY: loading
 loading: # show loading state
-	set -e -- ; \
+	set -e; \
 	if [[ $${@} == '--fin' ]]; \
 	then \
 		echo "loading finished"; \
@@ -25,23 +25,23 @@ loading: # show loading state
 
 .PHONY: build
 build: lint # build app for environment [vars: env]
-	set -e -- ; \
+	set -e; \
 	[[ -n `printf '%s' '$(env)'` ]] && echo "buiding app for `printf '%s' '$(env)'`" || echo "error: missing env"; \
 
 .PHONY: test
 test: # run all tests or specific tests [vars: name1, name2, etc.]
-	set -e -- ; \
+	set -e; \
 	run build env=test; \
 	[[ -n $${@} ]] && echo "running tests $${@}" || echo "running all tests"; \
 
 .PHONY: lint
 lint: # lint all files or specific file [vars: file]
-	set -e -- ; \
+	set -e; \
 	[[ -n $${1} ]] && echo "linting file $${1}" || echo "linting all files"; \
 
 .PHONY: complex
 complex: # a sample command exploring complex multiline syntax
-	set -e -- ; \
+	set -e; \
 	echo "--- for loops ---"; \
 	for x in abc hjkl xyz; \
 	do \

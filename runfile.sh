@@ -269,7 +269,12 @@ function inject-set-args-line() {
       values+="\`printf '%s' '${arg}'\`"
     done
 
-    sed -E -e "s!^$( task_re )\$!\1:$( subtask_re )\3\n\tset -e -- ${values}; \\\\!"
+    if [[ -n "${values}" ]]
+    then
+      sed -E -e "s!^$( task_re )\$!\1:$( subtask_re )\3\n\tset -e -- ${values}; \\\\!"
+    else
+      sed -E -e "s!^$( task_re )\$!\1:$( subtask_re )\3\n\tset -e; \\\\!"
+    fi
   else
     cat
   fi
