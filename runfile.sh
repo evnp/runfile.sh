@@ -648,20 +648,29 @@ EOF
     # the quotes would be included when args are interpolated within strings. eg.
     # "hello: $(world)" -> "hello: '$(world)'" -> "hello: ''" (unwanted quotes)
 
+    # Replace all '$' with '$$' in scripts:
+    # shellcheck disable=SC2016
+    buffer="$( echo "${buffer}" | sed -E 's!([^\$])\$([^\$])!\1\$\$\2!g' )"
+
     # Replace $(@) $(1) $(2) etc. in script with Bash-style positional args:
     buffer="$(
       echo "${buffer}" | \
       sed -E \
-        -e 's!([^\$])\$([0-9]+)!\1\$\${\2}!g' \
-        -e 's!([^\$])\$\(([0-9]+)\)!\1\$\${\2}!g' \
-        -e 's!([^\$])\$\{([0-9]+)\}!\1\$\${\2}!g' \
-        -e 's!([^\$])\$@!\1\$\${@}!g' \
-        -e 's!([^\$])\$\(@\)!\1\$\${@}!g' \
-        -e 's!([^\$])\$\{@\}!\1\$\${@}!g' \
-        -e 's!([^\$])\$\(@:([0-9]+)\)!\1\$\${@:\2}!g' \
-        -e 's!([^\$])\$\{@:([0-9]+)\}!\1\$\${@:\2}!g' \
-        -e 's!([^\$])\$\(@:([0-9]+):([0-9]+)\)!\1\$\${@:\2:\3}!g' \
-        -e 's!([^\$])\$\{@:([0-9]+):([0-9]+)\}!\1\$\${@:\2:\3}!g'
+        -e 's!\$\$([0-9]+)!\$\${\1}!g' \
+        -e 's!\$\$\(([0-9]+)\)!\$\${\1}!g' \
+        -e 's!\$\$\{([[:alpha:]][[:alnum:]_]*)\}!\$\${\1}!g' \
+        -e 's!\$\$@!\$\${@}!g' \
+        -e 's!\$\$\(@\)!\$\${@}!g' \
+        -e 's!\$\$\(@:([0-9]+)\)!\$\${@:\1}!g' \
+        -e 's!\$\$\{@:([0-9]+)\}!\$\${@:\1}!g' \
+        -e 's!\$\$\(@:([0-9]+):([0-9]+)\)!\$\${@:\1:\2}!g' \
+        -e 's!\$\$\{@:([0-9]+):([0-9]+)\}!\$\${@:\1:\2}!g'
+    )"
+
+    # Remove double-dollarsign from Make-style named args:
+    # shellcheck disable=SC2016
+    buffer="$(
+      echo "${buffer}" | sed -E 's!\$\$\(([[:alpha:]][[:alnum:]_]*)\)!\$(\1)!g'
     )"
 
     # Write buffer back to temporary makefile:

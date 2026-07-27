@@ -34,17 +34,17 @@ complex: # a sample command exploring complex multiline syntax
 
 	for x in abc hjkl xyz
 	do
-		echo -n " $${x} ::"
+		echo -n " ${x} ::"
 	done
 	echo
 
 	for x in abc hjkl xyz; do
-		echo -n " $${x} ::"
+		echo -n " ${x} ::"
 	done
 	echo
 
 	for x in abc hjkl xyz
-	do echo -n " $${x} ::"
+	do echo -n " ${x} ::"
 	done
 	echo
 
@@ -52,28 +52,28 @@ complex: # a sample command exploring complex multiline syntax
 
 	while read x
 	do
-		echo -n " $${x} ::"
-	done <<< $$'abc\n hjkl\n xyz'
+		echo -n " ${x} ::"
+	done <<< $'abc\n hjkl\n xyz'
 	echo
 
 	while read x; do
-		echo -n " $${x} ::"
-	done <<< $$'abc\n hjkl\n xyz'
+		echo -n " ${x} ::"
+	done <<< $'abc\n hjkl\n xyz'
 	echo
 
 	while read x
-	do echo -n " $${x} ::"
-	done <<< $$'abc\n hjkl\n xyz'
+	do echo -n " ${x} ::"
+	done <<< $'abc\n hjkl\n xyz'
 	echo
 
 	echo "--- if constructs ---"
 
 	x=''
-	if [[ -z "$${x}" ]]
+	if [[ -z "${x}" ]]
 	then
 		echo -n " abc"
 		echo -n " ::"
-	elif [[ "$${x}" =~ a[Bb][a-z]$$ ]]
+	elif [[ "${x}" =~ a[Bb][a-z]$ ]]
 	then
 		echo -n " hjkl"
 		echo -n " ::"
@@ -83,10 +83,10 @@ complex: # a sample command exploring complex multiline syntax
 	fi
 
 	y=''
-	if [[ -n "$${y}" ]]; then
+	if [[ -n "${y}" ]]; then
 		echo -n " abc"
 		echo -n " ::"
-	elif ! [[ "$${y}" =~ a[Bb][a-z]$$ ]]; then
+	elif ! [[ "${y}" =~ a[Bb][a-z]$ ]]; then
 		echo -n " hjkl"
 		echo -n " ::"
 	else
@@ -95,11 +95,11 @@ complex: # a sample command exploring complex multiline syntax
 	fi
 
 	z=''
-	if [[ -z "$${x}" ]]
-	then x='abc'; echo -n " $${x} ::"
-	elif [[ x =~ a[Bb][a-z]$$ ]]
-	then x='hjkl'; echo -n " $${x} ::"
-	else echo -n " $${x} ::"
+	if [[ -z "${x}" ]]
+	then x='abc'; echo -n " ${x} ::"
+	elif [[ x =~ a[Bb][a-z]$ ]]
+	then x='hjkl'; echo -n " ${x} ::"
+	else echo -n " ${x} ::"
 	fi
 	echo
 
@@ -107,17 +107,17 @@ complex: # a sample command exploring complex multiline syntax
 
 	for x in abc hjkl xyz;
 	do
-		echo -n " $${x} ::";
+		echo -n " ${x} ::";
 	done
 	echo
 
 	for x in abc hjkl xyz; do
-		echo -n " $${x} ::";
+		echo -n " ${x} ::";
 	done
 	echo
 
 	for x in abc hjkl xyz;
-	do echo -n " $${x} ::";
+	do echo -n " ${x} ::";
 	done
 	echo
 
@@ -125,28 +125,28 @@ complex: # a sample command exploring complex multiline syntax
 
 	while read x;
 	do
-		echo -n " $${x} ::";
-	done <<< $$'abc\n hjkl\n xyz';
+		echo -n " ${x} ::";
+	done <<< $'abc\n hjkl\n xyz';
 	echo
 
 	while read x; do
-		echo -n " $${x} ::";
-	done <<< $$'abc\n hjkl\n xyz';
+		echo -n " ${x} ::";
+	done <<< $'abc\n hjkl\n xyz';
 	echo
 
 	while read x;
-	do echo -n " $${x} ::";
-	done <<< $$'abc\n hjkl\n xyz';
+	do echo -n " ${x} ::";
+	done <<< $'abc\n hjkl\n xyz';
 	echo
 
 	echo "--- if constructs :: pathological semicolon usage ---"
 
 	x=''
-	if [[ -z "$${x}" ]];
+	if [[ -z "${x}" ]];
 	then
 		echo -n " abc";
 		echo -n " ::";
-	elif [[ "$${x}" =~ a[Bb][a-z]$$ ]];
+	elif [[ "${x}" =~ a[Bb][a-z]$ ]];
 	then
 		echo -n " hjkl";
 		echo -n " ::";
@@ -156,10 +156,10 @@ complex: # a sample command exploring complex multiline syntax
 	fi
 
 	y=''
-	if [[ -n "$${y}" ]]; then
+	if [[ -n "${y}" ]]; then
 		echo -n " abc";
 		echo -n " ::";
-	elif ! [[ "$${y}" =~ a[Bb][a-z]$$ ]]; then
+	elif ! [[ "${y}" =~ a[Bb][a-z]$ ]]; then
 		echo -n " hjkl";
 		echo -n " ::";
 	else
@@ -168,11 +168,11 @@ complex: # a sample command exploring complex multiline syntax
 	fi
 
 	z=''
-	if [[ -z "$${x}" ]];
-	then x='abc'; echo -n " $${x} ::";
-	elif [[ x =~ a[Bb][a-z]$$ ]];
-	then x='hjkl'; echo -n " $${x} ::";
-	else echo -n " $${x} ::";
+	if [[ -z "${x}" ]];
+	then x='abc'; echo -n " ${x} ::";
+	elif [[ x =~ a[Bb][a-z]$ ]];
+	then x='hjkl'; echo -n " ${x} ::";
+	else echo -n " ${x} ::";
 	fi
 
 
