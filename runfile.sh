@@ -266,7 +266,7 @@ function inject-set-args-line() {
     for arg in "${pos_args[@]}"
     do
       [[ -n "${values}" ]] && values+=" "
-      values+="\`printf '%s' '${arg}'\`"
+      values+="'${arg}'"
     done
 
     if [[ -n "${values}" ]]
