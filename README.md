@@ -74,12 +74,12 @@ taskxyz: taskabc # Task description, taskxyz runs taskabc first just like Make w
 -a --alias FILENAME · Attempt to write/update aliases within shell config file.
 --eject ············· Generate Makefile from Runfile and write to current dir.
 
---verbose ··········· Print code line-by-line to terminal during task execution.
---compact ··········· Use "compact" formatting for Runfile when creating or printing.
---compat ············ Disable all features not compatible with Make.
---confirm ··········· Always ask for confirmation before opening files with \$EDITOR.
---noconfirm ········· Never ask for confirmation before opening files with \$EDITOR.
---noedit ············ Never open files with \$EDITOR.
+--runfile-verbose ··· Print code line-by-line to terminal during task execution.
+--runfile-compact ··· Use "compact" formatting for Runfile when creating or printing.
+--runfile-compat ···· Disable all features not compatible with Make.
+--runfile-confirm ··· Always ask for confirmation before opening files with \$EDITOR.
+--runfile-noconfirm · Never ask for confirmation before opening files with \$EDITOR.
+--runfile-noedit ···· Never open files with \$EDITOR.
 RUNFILE_VERBOSE=1 RUNFILE_COMPACT=1   RUNFILE_COMPAT=1 ·  All options may also be  ·
 RUNFILE_CONFIRM=1 RUNFILE_NOCONFIRM=1 RUNFILE_NOEDIT=1 · provided as env variables ·
 
