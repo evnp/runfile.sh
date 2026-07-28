@@ -1,4 +1,4 @@
-SHELL := /bin/bash
+SHELL := bash
 
 
 .PHONY: start
@@ -16,28 +16,23 @@ stop:
 .PHONY: loading
 loading:
 	set -e; \
-	if [[ $${@} == '--fin' ]]; \
-	then \
-		echo "loading finished"; \
-	else \
-		echo "loading started"; \
-	fi; \
+	echo "loading" $${@}; \
 
 .PHONY: build
 build:lint
 	set -e; \
-	[[ -n `printf '%s' '$(env)'` ]] && echo "buiding app for `printf '%s' '$(env)'`" || echo "error: missing env"; \
+	[ "`printf '%s' '$(env)'`" != "" ] && echo "buiding app for `printf '%s' '$(env)'`" || echo "error: missing env"; \
 
 .PHONY: test
 test:
 	set -e; \
 	run build env=test; \
-	[[ -n $${@} ]] && echo "running tests $${@}" || echo "running all tests"; \
+	[ "$${@}" != "" ] && echo "running tests $${@}" || echo "running all tests"; \
 
 .PHONY: lint
 lint:
 	set -e; \
-	[[ -n $${1} ]] && echo "linting file $${1}" || echo "linting all files"; \
+	[ "$${1}" != "" ] && echo "linting file $${1}" || echo "linting all files"; \
 
 .PHONY: complex
 complex:
@@ -45,11 +40,11 @@ complex:
 	echo "--- for loops ---"; \
 	for x in abc hjkl xyz; \
 	do \
-		echo -n " $${x} ::"; \
+	echo -n " $${x} ::"; \
 	done; \
 	echo; \
 	for x in abc hjkl xyz; do \
-		echo -n " $${x} ::"; \
+	echo -n " $${x} ::"; \
 	done; \
 	echo; \
 	for x in abc hjkl xyz; \
@@ -59,11 +54,11 @@ complex:
 	echo "--- while loops ---"; \
 	while read x; \
 	do \
-		echo -n " $${x} ::"; \
+	echo -n " $${x} ::"; \
 	done <<< $$'abc\n hjkl\n xyz'; \
 	echo; \
 	while read x; do \
-		echo -n " $${x} ::"; \
+	echo -n " $${x} ::"; \
 	done <<< $$'abc\n hjkl\n xyz'; \
 	echo; \
 	while read x; \
@@ -74,26 +69,26 @@ complex:
 	x=''; \
 	if [[ -z "$${x}" ]]; \
 	then \
-		echo -n " abc"; \
-		echo -n " ::"; \
+	echo -n " abc"; \
+	echo -n " ::"; \
 	elif [[ "$${x}" =~ a[Bb][a-z]$$ ]]; \
 	then \
-		echo -n " hjkl"; \
-		echo -n " ::"; \
+	echo -n " hjkl"; \
+	echo -n " ::"; \
 	else \
-		echo -n " xyz"; \
-		echo -n " ::"; \
+	echo -n " xyz"; \
+	echo -n " ::"; \
 	fi; \
 	y=''; \
 	if [[ -n "$${y}" ]]; then \
-		echo -n " abc"; \
-		echo -n " ::"; \
+	echo -n " abc"; \
+	echo -n " ::"; \
 	elif ! [[ "$${y}" =~ a[Bb][a-z]$$ ]]; then \
-		echo -n " hjkl"; \
-		echo -n " ::"; \
+	echo -n " hjkl"; \
+	echo -n " ::"; \
 	else \
-		echo -n " xyz"; \
-		echo -n "  ::"; \
+	echo -n " xyz"; \
+	echo -n "  ::"; \
 	fi; \
 	z=''; \
 	if [[ -z "$${x}" ]]; \
@@ -106,11 +101,11 @@ complex:
 	echo "--- for loops :: pathological semicolon usage ---"; \
 	for x in abc hjkl xyz; \
 	do \
-		echo -n " $${x} ::"; \
+	echo -n " $${x} ::"; \
 	done; \
 	echo; \
 	for x in abc hjkl xyz; do \
-		echo -n " $${x} ::"; \
+	echo -n " $${x} ::"; \
 	done; \
 	echo; \
 	for x in abc hjkl xyz; \
@@ -120,11 +115,11 @@ complex:
 	echo "--- while loops :: pathological semicolon usage ---"; \
 	while read x; \
 	do \
-		echo -n " $${x} ::"; \
+	echo -n " $${x} ::"; \
 	done <<< $$'abc\n hjkl\n xyz'; \
 	echo; \
 	while read x; do \
-		echo -n " $${x} ::"; \
+	echo -n " $${x} ::"; \
 	done <<< $$'abc\n hjkl\n xyz'; \
 	echo; \
 	while read x; \
@@ -135,26 +130,26 @@ complex:
 	x=''; \
 	if [[ -z "$${x}" ]]; \
 	then \
-		echo -n " abc"; \
-		echo -n " ::"; \
+	echo -n " abc"; \
+	echo -n " ::"; \
 	elif [[ "$${x}" =~ a[Bb][a-z]$$ ]]; \
 	then \
-		echo -n " hjkl"; \
-		echo -n " ::"; \
+	echo -n " hjkl"; \
+	echo -n " ::"; \
 	else \
-		echo -n " xyz"; \
-		echo -n " ::"; \
+	echo -n " xyz"; \
+	echo -n " ::"; \
 	fi; \
 	y=''; \
 	if [[ -n "$${y}" ]]; then \
-		echo -n " abc"; \
-		echo -n " ::"; \
+	echo -n " abc"; \
+	echo -n " ::"; \
 	elif ! [[ "$${y}" =~ a[Bb][a-z]$$ ]]; then \
-		echo -n " hjkl"; \
-		echo -n " ::"; \
+	echo -n " hjkl"; \
+	echo -n " ::"; \
 	else \
-		echo -n " xyz"; \
-		echo -n " ::"; \
+	echo -n " xyz"; \
+	echo -n " ::"; \
 	fi; \
 	z=''; \
 	if [[ -z "$${x}" ]]; \

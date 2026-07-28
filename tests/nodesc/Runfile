@@ -8,19 +8,14 @@ stop:
 HUP run loading --fin
 echo "stopping app"
 loading:
-if [[ $(@) == '--fin' ]]
-then
-  echo "loading finished"
-else
-  echo "loading started"
-fi
+echo "loading" $(@)
 build:lint
-[[ -n $(env) ]] && echo "buiding app for $(env)" || echo "error: missing env"
+[ "$(env)" != "" ] && echo "buiding app for $(env)" || echo "error: missing env"
 test:
 run build env=test
-[[ -n $(@) ]] && echo "running tests $(@)" || echo "running all tests"
+[ "$(@)" != "" ] && echo "running tests $(@)" || echo "running all tests"
 lint:
-[[ -n $(1) ]] && echo "linting file $(1)" || echo "linting all files"
+[ "$(1)" != "" ] && echo "linting file $(1)" || echo "linting all files"
 complex:
 echo "--- for loops ---"
 for x in abc hjkl xyz

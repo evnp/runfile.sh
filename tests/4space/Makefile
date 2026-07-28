@@ -1,4 +1,4 @@
-SHELL := /bin/bash
+SHELL := bash
 
 
 .PHONY: start
@@ -16,28 +16,23 @@ stop: # stop app
 .PHONY: loading
 loading: # show loading state
 	set -e; \
-	if [[ $${@} == '--fin' ]]; \
-	then \
-		echo "loading finished"; \
-	else \
-		echo "loading started"; \
-	fi; \
+	echo "loading" $${@}; \
 
 .PHONY: build
 build: lint # build app for environment [vars: env]
 	set -e; \
-	[[ -n `printf '%s' '$(env)'` ]] && echo "buiding app for `printf '%s' '$(env)'`" || echo "error: missing env"; \
+	[ "`printf '%s' '$(env)'`" != "" ] && echo "buiding app for `printf '%s' '$(env)'`" || echo "error: missing env"; \
 
 .PHONY: test
 test: # run all tests or specific tests [vars: name1, name2, etc.]
 	set -e; \
 	run build env=test; \
-	[[ -n $${@} ]] && echo "running tests $${@}" || echo "running all tests"; \
+	[ "$${@}" != "" ] && echo "running tests $${@}" || echo "running all tests"; \
 
 .PHONY: lint
 lint: # lint all files or specific file [vars: file]
 	set -e; \
-	[[ -n $${1} ]] && echo "linting file $${1}" || echo "linting all files"; \
+	[ "$${1}" != "" ] && echo "linting file $${1}" || echo "linting all files"; \
 
 .PHONY: complex
 complex: # a sample command exploring complex multiline syntax

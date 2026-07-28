@@ -134,8 +134,8 @@ stopping app
 linting all files
 buiding app for dev
 starting app
-loading started
-loading finished
+loading
+loading --fin
 EOF
   )"
   assert_success

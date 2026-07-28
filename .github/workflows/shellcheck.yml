@@ -9,4 +9,5 @@ jobs:
           node-version: '20.x'
       - uses: actions/checkout@v2
       - run: npm install
-      - run: ./runfile.sh lint
+      - run: npm install -g runfile.sh
+      - run: run lint

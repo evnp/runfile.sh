@@ -599,15 +599,14 @@ function run() ( set -euo pipefail
   fi
 
   baseindent="$( \
-    grep -Eoz "^$( task_re )[^\n]*\n[[:space:]]*" "$( smartcase-file runfile )" \
-    | head -2 | tail -1
+    grep -Eo "^[[:space:]]+" "$( smartcase-file runfile )" | sort | head -1
   )"
 
 # ::::::::::::::::::::::::::::::::::::::::::
 # Construct temporary Makefile from Runfile:
 # Note: <<-EOF doesn't produce correct indentation for final lines; <<EOF required.
 cat <<EOF> "${makefile}"
-SHELL := ${SHELL:-bash}
+SHELL := ${RUNFILE_SHELL:-bash}
 
 ${runfile_variables}$(
   grep "${runfile_grep_filter_args[@]}" "$( smartcase-file runfile )" \

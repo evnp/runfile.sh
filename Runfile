@@ -1,12 +1,10 @@
-BIN = ./node_modules/.bin
-
 lint: # lint
-  $(BIN)/shellcheck runfile.sh
+  ./node_modules/.bin/shellcheck runfile.sh
 
 man: # generate/update man page from README
   sed '1,/^Usage$/d' README.md \
   | sed '1s/^/DESCRIPTION\\nBasic usage:\n/' \
-  | $(BIN)/marked-man --name=runfile.sh \
+  | ./node_modules/.bin/marked-man --name=runfile.sh \
   | sed -E 's/^(..Brunfile.sh)/\1 – Language-agnostic project task runner built on the ubiquitous Make./' \
   | tr '\n' '\r' \
   | sed -E 's/\([^\)]*\)//g' \
@@ -41,20 +39,20 @@ test-all: lint # run all tests
   do
     echo -ne "$( tput smul )$( tput bold )${runfile}$( tput sgr0 ) -> "
     TEST_RUNFILE="${runfile}" \
-    $(BIN)/bats --jobs 16 --no-parallelize-across-files tests/test.bats
+    ./node_modules/.bin/bats --jobs 16 --no-parallelize-across-files tests/test.bats
   done
 
 test-by-directory: lint # run all tests in test directory
   echo -ne "$( tput smul )$( tput bold )tests/$(@)/Runfile$( tput sgr0 ) -> "
   TEST_RUNFILE="tests/$(@)/Runfile" \
-  $(BIN)/bats --jobs 16 --no-parallelize-across-files tests/test.bats
+  ./node_modules/.bin/bats --jobs 16 --no-parallelize-across-files tests/test.bats
 
 test-by-index: lint # run test case at index
   for runfile in tests/*/Runfile
   do
     echo -ne "$( tput smul )$( tput bold )${runfile}$( tput sgr0 ) -> "
     TEST_RUNFILE="${runfile}" \
-    $(BIN)/bats -f "$( grep @test ./tests/test.bats | head -$(1) | tail -1 | cut -d' ' -f3- | cut -d'"' -f1 )$" ./tests/test.bats
+    ./node_modules/.bin/bats -f "$( grep @test ./tests/test.bats | head -$(1) | tail -1 | cut -d' ' -f3- | cut -d'"' -f1 )$" ./tests/test.bats
   done
 
 test-by-substring: lint # run test cases matching substring
@@ -62,7 +60,7 @@ test-by-substring: lint # run test cases matching substring
   do
     echo -ne "$( tput smul )$( tput bold )${runfile}$( tput sgr0 ) -> "
     TEST_RUNFILE="${runfile}" \
-    $(BIN)/bats -f "$(@)" tests/test.bats
+    ./node_modules/.bin/bats -f "$(@)" tests/test.bats
   done
 
 test-update-makefiles: # re-generate test reference makefiles from runfiles
