@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# runfile.sh · v0.0.3
+# runfile.sh · v0.0.4
 
 function bold() {
   echo "$( tput bold )$*$( tput sgr0 )"
