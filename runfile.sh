@@ -190,7 +190,8 @@ function print-runfile-commands() {
   # Print current Runfile commands:
   echo
   grep -E "^$( task_re )$" "$( smartcase-file runfile )" \
-  | sed -Ee "s!^$( task_re )\$!\1 · \4!g" -e 's!  ! !g' -e 's!^!  !g'
+  | sed -Ee "s!^$( task_re )\$!\1 · \4!g" -e 's!  ! !g' -e 's!^!  !g' \
+  | grep -v "  _" # avoid printing "private" / "internal" tasks (underscore-prefixed)
   echo
   # Print Runfile command aliases if any are currently available:
   awk 'NR==FNR{a[$0]=1;next}a[$0]' <( bash -ic 'alias' ) <( print-runfile-aliases ) \
