@@ -4,9 +4,12 @@ SHELL := bash
 .PHONY: start
 start: stop # start app
 	set -e; \
+		`# COMMENTS SHOULD BE ALLOWED`; \
 	run build env=dev `# tasks can be run directly from other tasks`; \
+		`# ANYWHERE IN`; \
 	echo "starting app"; \
 	run loading; \
+		`# RUNFILE COMMANDS`; \
 
 .PHONY: stop
 stop: # stop app

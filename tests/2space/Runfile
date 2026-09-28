@@ -1,9 +1,13 @@
 start: stop # start app
+  # COMMENTS SHOULD
   run build env=dev # tasks can be run directly from other tasks
+  # BE ALLOWED
   echo "starting app"
   run loading
   EXIT run loading --fin # prefixing command with signal registers a trap
+  # ANYWHERE IN
   INT run loading --fin
+  # RUNFILE COMMANDS
 
 stop: # stop app
   HUP run loading --fin

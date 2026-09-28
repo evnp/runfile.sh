@@ -244,7 +244,9 @@ function inject-semicolons-and-backslashes() {
   then
     sed -E \
       -e "s!^\t(.*[^\\])\#(.*)\$!\t\1\`\#\2\`!" \
-        `# wrap code comments in backticks to make them work with backslashed lines` \
+        `# wrap trailing comments in backticks so they work with backslashed syntax` \
+      -e "s!^\t\#(.*)\$!\t\`\#\1\`!" \
+        `# wrap comment lines in backticks so they work with backslashed syntax` \
       -e "s!^\t(.*;[[:space:]]*[^\\]?)\$!\t\1 \\\\!" \
       -e "s!^\t(.*[^\\])\$!\t\1; \\\\!" \
       -e "s!(then|else|do); \\\\\$!\1 \\\\!" \
@@ -254,6 +256,7 @@ function inject-semicolons-and-backslashes() {
   else
     cat
   fi
+
 }
 
 function inject-set-args-line() {
