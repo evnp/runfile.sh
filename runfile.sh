@@ -133,7 +133,7 @@ EOF
 }
 
 function compact-file() {
-  sed -e '/^$/d' -e 's/^[[:space:]]//'
+  sed -e '/^$/d' -e 's!^[[:space:]]!!'
 }
 
 function optionally-compact-file() {
@@ -190,20 +190,20 @@ function print-runfile-commands() {
   # Print current Runfile commands:
   echo
   grep -E "^$( task_re )$" "$( smartcase-file runfile )" \
-  | sed -Ee "s/^$( task_re )$/\1 · \4/g" -e 's/  / /g' -e 's/^/  /g'
+  | sed -Ee "s!^$( task_re )\$!\1 · \4!g" -e 's!  ! !g' -e 's!^!  !g'
   echo
   # Print Runfile command aliases if any are currently available:
   awk 'NR==FNR{a[$0]=1;next}a[$0]' <( bash -ic 'alias' ) <( print-runfile-aliases ) \
-  | sed -e "s/\'/ /g" -e "s/= / · /" -e 's/^/  /' -e 's/$/\n/' \
-  | perl -0777 -pe 's/\n\n(.)/\n\1/g'
+  | sed -e "s!\'! !g" -e "s!= ! · !" -e 's!^!  !' -e 's!$!\n!' \
+  | perl -0777 -pe 's!\n\n(.)!\n\1!g'
 }
 
 function print-runfile-aliases() {
   echo '# Runfile Aliases'
   grep -E "^$( task_re )$" "$( smartcase-file runfile )" \
-  | sed -E "s/.*(^| )$( task_re )$/\2/g" \
+  | sed -E "s!.*(^| )$( task_re )\$!\2!g" \
   | awk '!_[substr($1,1,1)]++' `# unique on first char of each command` \
-  | sed -E "s/(.)(.*)/alias ${RUNFILE_ALIASES_PREFIX:-r}\1='run \1\2'/"
+  | sed -E "s!(.)(.*)!alias ${RUNFILE_ALIASES_PREFIX:-r}\1='run \1\2'!"
   echo '# END Runfile Aliases'
 }
 
@@ -340,7 +340,7 @@ EOF
       printf "─%.0s" $( seq $(( "$( awk '{ print length }' Runfile | sort -n | tail -1 )" - 8 )))
       echo '─┐'
       echo
-      bold "$( sed "s/#.*$/$( tput sgr0 )&$( tput bold )/" Runfile )"
+      bold "$( sed "s!#.*\$!$( tput sgr0 )&$( tput bold )!" Runfile )"
       echo
       echo -n '└─────'
       printf "─%.0s" $( seq $(( "$( awk '{ print length }' Runfile | sort -n | tail -1 )" - 8 )))
@@ -412,7 +412,7 @@ EOF
         if [[ -n "$REPLY" ]]
         then
           # Append to last line of file:
-          sed '$s/$/'" # $REPLY"'/' <<EOF > Runfile
+          sed '$s!$!'" # $REPLY"'!' <<EOF > Runfile
 ${prev_runfiles[0]}
 EOF
         else
@@ -612,11 +612,11 @@ ${runfile_variables}$(
   grep "${runfile_grep_filter_args[@]}" "$( smartcase-file runfile )" \
   | grep -Ev "$( runfile_variable_re )" \
   | sed -E \
-      -e "s/[[:space:]]*\$//" \
+      -e "s![[:space:]]*\$!!" \
         `# trim any trailing whitespace from lines` \
-      -e "s/^${baseindent}//" \
+      -e "s!^${baseindent}!!" \
         `# trim leading base indent from lines` \
-      -e "s/^[[:space:]]+/\t/" \
+      -e "s!^[[:space:]]+!\t!" \
         `# replace deeper indentation with TAB` \
       -e "s!^!\t!" \
         `# prefix every line with TAB` \

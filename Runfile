@@ -3,11 +3,11 @@ lint: # lint
 
 man: # generate/update man page from README
   sed '1,/^Usage$/d' README.md \
-  | sed '1s/^/DESCRIPTION\\nBasic usage:\n/' \
+  | sed '1s!^!DESCRIPTION\\nBasic usage:\n!' \
   | ./node_modules/.bin/marked-man --name=runfile.sh \
-  | sed -E 's/^(..Brunfile.sh)/\1 – Language-agnostic project task runner built on the ubiquitous Make./' \
+  | sed -E 's!^(..Brunfile.sh)!\1 – Language-agnostic project task runner built on the ubiquitous Make.!' \
   | tr '\n' '\r' \
-  | sed -E 's/\([^\)]*\)//g' \
+  | sed -E 's!\([^\)]*\)!!g' \
   | tr '\r' '\n' > ./man/run.1
 
 release: # publish a new release (with confirmation)
