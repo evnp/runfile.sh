@@ -243,11 +243,10 @@ function inject-semicolons-and-backslashes() {
     && "${is_compat_mode}" != TRUE \
     && "${is_ejecting_makefile}" != TRUE ]]
   then
-    sed -E \
+    sed '/^\t\#/d' `# delete lines that start with a comment` \
+    | sed -E \
       -e "s!^\t(.*[^\\])\#(.*)\$!\t\1\`\#\2\`!" \
         `# wrap trailing comments in backticks so they work with backslashed syntax` \
-      -e "s!^\t\#(.*)\$!\t\`\#\1\`!" \
-        `# wrap comment lines in backticks so they work with backslashed syntax` \
       -e "s!^\t(.*;[[:space:]]*[^\\]?)\$!\t\1 \\\\!" \
       -e "s!^\t(.*[^\\])\$!\t\1; \\\\!" \
       -e "s!(then|else|do); \\\\\$!\1 \\\\!" \
@@ -620,8 +619,8 @@ ${runfile_variables}$(
         `# trim any trailing whitespace from lines` \
       -e "s!^${baseindent}!!" \
         `# trim leading base indent from lines` \
-      -e "s!^[[:space:]]+!\t!" \
-        `# replace deeper indentation with TAB` \
+      -e "s!^[[:space:]]+!!" \
+        `# remove deeper indentation` \
       -e "s!^!\t!" \
         `# prefix every line with TAB` \
       -e "s!^\t\$!!" \

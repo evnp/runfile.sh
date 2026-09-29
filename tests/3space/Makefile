@@ -41,12 +41,12 @@ complex: # a sample command exploring complex multiline syntax
 
 	for x in abc hjkl xyz; \
 	do \
-		echo -n " $${x} ::"; \
+	echo -n " $${x} ::"; \
 	done; \
 	echo; \
 
 	for x in abc hjkl xyz; do \
-		echo -n " $${x} ::"; \
+	echo -n " $${x} ::"; \
 	done; \
 	echo; \
 
@@ -59,12 +59,12 @@ complex: # a sample command exploring complex multiline syntax
 
 	while read x; \
 	do \
-		echo -n " $${x} ::"; \
+	echo -n " $${x} ::"; \
 	done <<< $$'abc\n hjkl\n xyz'; \
 	echo; \
 
 	while read x; do \
-		echo -n " $${x} ::"; \
+	echo -n " $${x} ::"; \
 	done <<< $$'abc\n hjkl\n xyz'; \
 	echo; \
 
@@ -78,27 +78,27 @@ complex: # a sample command exploring complex multiline syntax
 	x=''; \
 	if [[ -z "$${x}" ]]; \
 	then \
-		echo -n " abc"; \
-		echo -n " ::"; \
+	echo -n " abc"; \
+	echo -n " ::"; \
 	elif [[ "$${x}" =~ a[Bb][a-z]$$ ]]; \
 	then \
-		echo -n " hjkl"; \
-		echo -n " ::"; \
+	echo -n " hjkl"; \
+	echo -n " ::"; \
 	else \
-		echo -n " xyz"; \
-		echo -n " ::"; \
+	echo -n " xyz"; \
+	echo -n " ::"; \
 	fi; \
 
 	y=''; \
 	if [[ -n "$${y}" ]]; then \
-		echo -n " abc"; \
-		echo -n " ::"; \
+	echo -n " abc"; \
+	echo -n " ::"; \
 	elif ! [[ "$${y}" =~ a[Bb][a-z]$$ ]]; then \
-		echo -n " hjkl"; \
-		echo -n " ::"; \
+	echo -n " hjkl"; \
+	echo -n " ::"; \
 	else \
-		echo -n " xyz"; \
-		echo -n " ::"; \
+	echo -n " xyz"; \
+	echo -n " ::"; \
 	fi; \
 
 	z=''; \
@@ -114,12 +114,12 @@ complex: # a sample command exploring complex multiline syntax
 
 	for x in abc hjkl xyz; \
 	do \
-		echo -n " $${x} ::"; \
+	echo -n " $${x} ::"; \
 	done; \
 	echo; \
 
 	for x in abc hjkl xyz; do \
-		echo -n " $${x} ::"; \
+	echo -n " $${x} ::"; \
 	done; \
 	echo; \
 
@@ -132,12 +132,12 @@ complex: # a sample command exploring complex multiline syntax
 
 	while read x; \
 	do \
-		echo -n " $${x} ::"; \
+	echo -n " $${x} ::"; \
 	done <<< $$'abc\n hjkl\n xyz'; \
 	echo; \
 
 	while read x; do \
-		echo -n " $${x} ::"; \
+	echo -n " $${x} ::"; \
 	done <<< $$'abc\n hjkl\n xyz'; \
 	echo; \
 
@@ -151,27 +151,27 @@ complex: # a sample command exploring complex multiline syntax
 	x=''; \
 	if [[ -z "$${x}" ]]; \
 	then \
-		echo -n " abc"; \
-		echo -n " ::"; \
+	echo -n " abc"; \
+	echo -n " ::"; \
 	elif [[ "$${x}" =~ a[Bb][a-z]$$ ]]; \
 	then \
-		echo -n " hjkl"; \
-		echo -n " ::"; \
+	echo -n " hjkl"; \
+	echo -n " ::"; \
 	else \
-		echo -n " xyz"; \
-		echo -n " ::"; \
+	echo -n " xyz"; \
+	echo -n " ::"; \
 	fi; \
 
 	y=''; \
 	if [[ -n "$${y}" ]]; then \
-		echo -n " abc"; \
-		echo -n " ::"; \
+	echo -n " abc"; \
+	echo -n " ::"; \
 	elif ! [[ "$${y}" =~ a[Bb][a-z]$$ ]]; then \
-		echo -n " hjkl"; \
-		echo -n " ::"; \
+	echo -n " hjkl"; \
+	echo -n " ::"; \
 	else \
-		echo -n " xyz"; \
-		echo -n " ::"; \
+	echo -n " xyz"; \
+	echo -n " ::"; \
 	fi; \
 
 	z=''; \
